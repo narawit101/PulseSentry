@@ -88,8 +88,19 @@ export default function App() {
   const [portProtocolFilter, setPortProtocolFilter] = useState("ALL");
   const [portExposureFilter, setPortExposureFilter] = useState("ALL");
 
-  // Chart History
-  const [chartHistory, setChartHistory] = useState<{
+  // Configurable Chart Timeframe (30s, 1m, 5m, 10m, 30m, 1h)
+  const TIMEFRAME_OPTIONS = [
+    { label: "30s", seconds: 30, textTh: "30 วินาที", textEn: "30 seconds" },
+    { label: "1m", seconds: 60, textTh: "1 นาที", textEn: "1 minute" },
+    { label: "5m", seconds: 300, textTh: "5 นาที", textEn: "5 minutes" },
+    { label: "10m", seconds: 600, textTh: "10 นาที", textEn: "10 minutes" },
+    { label: "30m", seconds: 1800, textTh: "30 นาที", textEn: "30 minutes" },
+    { label: "1h", seconds: 3600, textTh: "1 ชั่วโมง", textEn: "1 hour" },
+  ];
+  const [timeframe, setTimeframe] = useState<number>(30);
+
+  // Chart History Buffer (Max 3600 points = 1 Hour)
+  const [fullHistory, setFullHistory] = useState<{
     dl: number[];
     ul: number[];
   }>({
@@ -137,10 +148,17 @@ export default function App() {
                 if (data.rates.uploadKBs !== undefined)
                   setPeakUlKB(prev => Math.max(prev, data.rates.uploadKBs));
 
-                setChartHistory((prev) => ({
-                  dl: [...prev.dl.slice(1), data.rates.downloadMBs],
-                  ul: [...prev.ul.slice(1), data.rates.uploadKBs / 1024],
-                }));
+                setFullHistory((prev) => {
+                  const newDl = [...prev.dl, data.rates.downloadMBs];
+                  const newUl = [...prev.ul, data.rates.uploadKBs / 1024];
+                  if (newDl.length > 3600) {
+                    return {
+                      dl: newDl.slice(-3600),
+                      ul: newUl.slice(-3600),
+                    };
+                  }
+                  return { dl: newDl, ul: newUl };
+                });
               }
               if (data.pings) {
                 if (data.pings.router) setPingRouter(data.pings.router);
@@ -248,31 +266,75 @@ export default function App() {
     "auto",
   );
 
+  const currentTimeframeObj =
+    TIMEFRAME_OPTIONS.find((opt) => opt.seconds === timeframe) ||
+    TIMEFRAME_OPTIONS[0];
+
+  // Smart Downsampling & History Slicing for Smooth 60fps Chart Rendering
+  const visibleSlice = useMemo(() => {
+    const rawDl = fullHistory.dl.slice(-timeframe);
+    const rawUl = fullHistory.ul.slice(-timeframe);
+    const padLength = Math.max(0, timeframe - rawDl.length);
+    const paddedDl = [...Array(padLength).fill(0), ...rawDl];
+    const paddedUl = [...Array(padLength).fill(0), ...rawUl];
+
+    // Cap to max 60 sampled points for high responsiveness
+    const maxPoints = 60;
+    const step = Math.max(1, Math.floor(timeframe / maxPoints));
+
+    const dlSampled: number[] = [];
+    const ulSampled: number[] = [];
+    const labels: string[] = [];
+
+    for (let i = 0; i < timeframe; i += step) {
+      const chunkDl = paddedDl.slice(i, i + step);
+      const chunkUl = paddedUl.slice(i, i + step);
+      const avgDl = chunkDl.reduce((a, b) => a + b, 0) / chunkDl.length;
+      const avgUl = chunkUl.reduce((a, b) => a + b, 0) / chunkUl.length;
+
+      dlSampled.push(avgDl);
+      ulSampled.push(avgUl);
+
+      const secondsAgo = timeframe - i;
+      if (i + step >= timeframe || secondsAgo <= 0) {
+        labels.push("Now");
+      } else if (secondsAgo < 60) {
+        labels.push(`-${secondsAgo}s`);
+      } else if (secondsAgo < 3600) {
+        labels.push(`-${Math.round(secondsAgo / 60)}m`);
+      } else {
+        labels.push(`-${(secondsAgo / 3600).toFixed(1)}h`);
+      }
+    }
+
+    return { dl: dlSampled, ul: ulSampled, labels };
+  }, [fullHistory, timeframe]);
+
   // Chart Configuration (Adaptive Auto-scaling)
   const isKBMode = useMemo(() => {
     if (chartUnitMode === "kb") return true;
     if (chartUnitMode === "mb") return false;
-    const maxVal = Math.max(...chartHistory.dl, ...chartHistory.ul);
+    const maxVal = Math.max(...visibleSlice.dl, ...visibleSlice.ul);
     return maxVal < 0.8;
-  }, [chartUnitMode, chartHistory]);
+  }, [chartUnitMode, visibleSlice]);
 
   const displayDlData = useMemo(() => {
-    return chartHistory.dl.map((v) =>
+    return visibleSlice.dl.map((v) =>
       isKBMode ? Math.round(v * 1024) : Number(v.toFixed(2)),
     );
-  }, [chartHistory.dl, isKBMode]);
+  }, [visibleSlice.dl, isKBMode]);
 
   const displayUlData = useMemo(() => {
-    return chartHistory.ul.map((v) =>
+    return visibleSlice.ul.map((v) =>
       isKBMode ? Math.round(v * 1024) : Number(v.toFixed(2)),
     );
-  }, [chartHistory.ul, isKBMode]);
+  }, [visibleSlice.ul, isKBMode]);
 
   const unitLabel = isKBMode ? "KB/s" : "MB/s";
 
   const chartData = useMemo(() => {
     return {
-      labels: Array.from({ length: 30 }, (_, i) => `-${30 - i}s`),
+      labels: visibleSlice.labels,
       datasets: [
         {
           label: `${t.download} (${unitLabel})`,
@@ -300,7 +362,7 @@ export default function App() {
         },
       ],
     };
-  }, [displayDlData, displayUlData, unitLabel, t.download, t.upload]);
+  }, [displayDlData, displayUlData, visibleSlice.labels, unitLabel, t.download, t.upload]);
 
   const chartOptions = {
     responsive: true,
@@ -735,11 +797,30 @@ export default function App() {
                     {t.bandwidthTimeline}
                   </h3>
                   <p className="text-xs text-ink-muted mt-0.5 m-0">
-                    {t.bandwidthDesc}
+                    {lang === "th"
+                      ? `ความเร็วรับ-ส่งข้อมูลย้อนหลัง ${currentTimeframeObj.textTh}`
+                      : `Live ${currentTimeframeObj.textEn} rolling transmission rate`}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* Timeframe Selector (30s, 1m, 5m, 10m, 30m, 1h) */}
+                  <div className="flex bg-canvas-soft p-0.5 rounded-md border border-hairline text-xs">
+                    {TIMEFRAME_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.seconds}
+                        onClick={() => setTimeframe(opt.seconds)}
+                        className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                          timeframe === opt.seconds
+                            ? "bg-surface text-primary font-semibold shadow-xs"
+                            : "text-ink-muted hover:text-ink"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+
                   {/* Unit Selector */}
                   <div className="flex bg-canvas-soft p-0.5 rounded-md border border-hairline text-xs">
                     <button
@@ -813,7 +894,7 @@ export default function App() {
                         กำลังรอข้อมูล Process จาก Windows Agent...
                       </div>
                     ) : (
-                      apps.slice(0, 5).map((app) => {
+                      apps.slice(0, 5).map((app, idx) => {
                         const sticker =
                           STICKER_COLORS[app.sticker] || STICKER_COLORS.sky;
                         const maxRate = Math.max(...apps.map((a) => a.dl + a.ul), 0.001);
@@ -827,6 +908,9 @@ export default function App() {
                           >
                             <div className="flex justify-between items-center gap-2">
                               <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                <span className="font-mono text-ink-faint text-[11px] w-3.5 shrink-0 font-medium">
+                                  {idx + 1}.
+                                </span>
                                 <span
                                   className={`w-2 h-2 rounded-full ${sticker.dot} shrink-0`}
                                 />
@@ -891,6 +975,7 @@ export default function App() {
                     <table className="w-full text-xs text-left">
                       <thead>
                         <tr className="text-ink-muted border-b border-hairline uppercase text-[10px] tracking-wider font-semibold font-mono">
+                          <th className="pb-2 w-6 font-mono text-ink-faint">#</th>
                           <th className="pb-2">{t.colApp}</th>
                           <th className="pb-2">Proto</th>
                           <th className="pb-2">{t.colRemote}</th>
@@ -903,6 +988,9 @@ export default function App() {
                             key={idx}
                             className="hover:bg-canvas-soft/50 transition-colors"
                           >
+                            <td className="py-2 font-mono text-ink-faint text-[11px]">
+                              {idx + 1}
+                            </td>
                             <td className="py-2 font-semibold text-ink flex items-center gap-1.5 truncate max-w-[120px]">
                               <span className="w-1.5 h-1.5 rounded-full bg-sticker-sky shrink-0" />
                               <span className="truncate">{s.proc}</span>
@@ -1055,6 +1143,7 @@ export default function App() {
               <table className="w-full text-xs text-left">
                 <thead>
                   <tr className="text-ink-muted border-b border-hairline uppercase text-[10px] tracking-wider font-semibold font-mono">
+                    <th className="pb-3 w-8 font-mono text-ink-faint">#</th>
                     <th
                       onClick={() => handleSort(appSort, setAppSort, "name")}
                       className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
@@ -1127,14 +1216,14 @@ export default function App() {
                   {sortedApps.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="py-8 text-center text-xs text-ink-muted"
                       >
                         กำลังรอข้อมูลจาก Host Agent...
                       </td>
                     </tr>
                   ) : (
-                    sortedApps.map((app) => {
+                    sortedApps.map((app, idx) => {
                       const sticker =
                         STICKER_COLORS[app.sticker] || STICKER_COLORS.sky;
                       return (
@@ -1142,6 +1231,9 @@ export default function App() {
                           key={app.pid}
                           className="hover:bg-canvas-soft/50 transition-colors"
                         >
+                          <td className="py-3 font-mono text-ink-faint text-[11px]">
+                            {idx + 1}
+                          </td>
                           <td className="py-3 font-semibold text-ink flex items-center gap-2">
                             <span
                               className={`w-2 h-2 rounded-full ${sticker.dot}`}
@@ -1224,6 +1316,7 @@ export default function App() {
               <table className="w-full text-xs text-left">
                 <thead>
                   <tr className="text-ink-muted border-b border-hairline uppercase text-[10px] tracking-wider font-semibold font-mono">
+                    <th className="pb-3 w-8 font-mono text-ink-faint">#</th>
                     <th
                       onClick={() =>
                         handleSort(socketSort, setSocketSort, "proc")
@@ -1334,7 +1427,7 @@ export default function App() {
                   {sortedSockets.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={8}
+                        colSpan={9}
                         className="py-8 text-center text-xs text-ink-muted"
                       >
                         กำลังรอข้อมูล Socket จาก Host Agent...
@@ -1346,6 +1439,9 @@ export default function App() {
                         key={idx}
                         className="hover:bg-canvas-soft/50 transition-colors"
                       >
+                        <td className="py-3 font-mono text-ink-faint text-[11px]">
+                          {idx + 1}
+                        </td>
                         <td className="py-3 font-semibold text-ink flex items-center gap-2">
                           <Terminal className="w-3.5 h-3.5 text-ink-faint" />
                           {s.proc}{" "}
@@ -1424,9 +1520,14 @@ export default function App() {
                     >
                       <div>
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-base font-bold text-ink">
-                            {region.country}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-ink-faint text-xs font-medium">
+                              #{idx + 1}
+                            </span>
+                            <span className="text-base font-bold text-ink">
+                              {region.country}
+                            </span>
+                          </div>
                           <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-surface border border-hairline font-mono text-ink">
                             {region.count} {t.activeSockets}
                           </span>
@@ -1504,6 +1605,7 @@ export default function App() {
               <table className="w-full text-xs text-left">
                 <thead>
                   <tr className="text-ink-muted border-b border-hairline uppercase text-[10px] tracking-wider font-semibold font-mono">
+                    <th className="pb-3 w-8 font-mono text-ink-faint">#</th>
                     <th
                       onClick={() => handleSort(portSort, setPortSort, "port")}
                       className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
@@ -1589,7 +1691,7 @@ export default function App() {
                   {sortedPorts.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={8}
                         className="py-8 text-center text-xs text-ink-muted font-mono"
                       >
                         กำลังสแกนพอร์ตในเครื่อง Windows...
@@ -1601,6 +1703,9 @@ export default function App() {
                         key={idx}
                         className="hover:bg-canvas-soft/50 transition-colors"
                       >
+                        <td className="py-3 font-mono text-ink-faint text-[11px]">
+                          {idx + 1}
+                        </td>
                         <td className="py-3 font-mono font-bold text-primary text-sm">
                           :{p.port}
                         </td>
