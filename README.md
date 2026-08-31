@@ -7,14 +7,16 @@
 ## 🌟 Key Features
 
 - **⚡ Real-Time Live Telemetry (Zero Mock Data)**:
-  - Live Download & Upload transfer rates with auto-scaling units (`KB/s` ➔ `MB/s` ➔ `GB/s`).
+  - Live Download & Upload transfer rates with auto-scaling units (`KB/s` ➔ `MB/s` ➔ `Mbps`).
   - Session transferred volume auto-stepping (`KB` ➔ `MB` ➔ `GB` ➔ `TB`).
-  - Dynamic peak rate memory tracker.
-  - Rolling 30-second bandwidth timeline graph.
+  - Dynamic peak rate memory tracker & rolling 30s to 1h bandwidth timeline graph with index-snapped hover tooltips.
 - **🚀 3-Stage Ookla Speedtest Benchmark Engine**:
   - **Stage 1 (Before Test / Idle)**: Interactive centered `GO` circular button, client ISP & IP detector, multi-server selector (Thai/Global nodes), and `Connections: Multi / Single` switch.
   - **Stage 2 (During Test)**: Calibrated 8-segment speedometer gauge with dynamic stage-colored glow (Cyan for Download, Purple for Upload), real-time Ping/Down/Up latency trio, and live 4-activity QoE indicators.
   - **Stage 3 (Summary & QoE)**: Master scorecard with instant re-test `GO` button, large KPIs, mathematical QoE activity ratings (Web, Gaming, 4K Streaming, Video Calls), 1-5 customer satisfaction expectation survey, and verified official Speedtest.net result links.
+- **📊 Unified CSV & JSON Exporter Engine**:
+  - Direct **Export CSV** support across **all tabs** (Traffic Summary, Apps, Sockets, Ports, GeoIP, and Speedtest History).
+  - Encoded with **UTF-8 BOM (`\uFEFF`)** for seamless 1-click opening in Microsoft Excel and Google Sheets without encoding glitches.
 - **🛡️ Threat Sentinel & Process Isolation**:
   - Live heuristics engine scanning for abnormal traffic, suspicious outbound connections, and background data leakage.
   - Safe 1-click process termination and whitelist isolation protection.
@@ -24,6 +26,8 @@
 - **🌍 Global GeoIP & Latency Mapping**:
   - Real-time geolocation resolution for remote connection endpoints.
   - Live ICMP/TCP latency ping tracker for Default Gateway, Cloudflare (`1.1.1.1`), and Google (`8.8.8.8`).
+- **✨ GPU Micro-Animation Engine**:
+  - Hardware-accelerated `.ps-fade-in` and `.ps-fade-out` CSS keyframe transitions across all tabs and speedtest state changes.
 - **🖥️ Standalone Windows Desktop App (.exe)**:
   - Microsoft Edge WebView2 + PyWebView lightweight runtime (< 30 MB RAM).
   - Native Windows System Tray integration with clean minimize-to-tray background monitoring.
@@ -160,8 +164,10 @@ You can double-click **`release/PulseSentry/PulseSentry.exe`** to run the app on
 
 | Module | Description |
 | :--- | :--- |
-| **`agent/`** | Python OS Telemetry Daemon (`psutil`, WebSocket server `ws://127.0.0.1:8765`, Threat Sentinel, Pinger, and Hybrid Speedtest Engine) |
-| **`src/`** | React 18 + TypeScript Frontend (Dashboard, Speedtest UI with Smooth Easing & Notion aesthetics, i18n, Real-time Charts) |
+| **`agent/`** | Python OS Telemetry Daemon (`psutil`, WebSocket server `ws://127.0.0.1:8765`, Threat Sentinel heuristics, ICMP/TCP Pinger, MaxMind/IP-API GeoIP, and Hybrid Speedtest Engine) |
+| **`src/components/`** | Modular React Tab Architecture (`OverviewTab`, `AppsTab`, `SocketsTab`, `PortsTab`, `GeoipTab`, `SpeedtestTab`, `MetricCard`, `ExportCsvButton`) |
+| **`src/components/speedtest/`** | Sub-components for Speedtest Suite (`SpeedGauge`, `SpeedtestScorecard`, `SpeedtestHistoryTable`, `ServerSelectModal`) |
+| **`src/utils/`** | Core utilities (`csv.ts` UTF-8 BOM engine, `format.ts` adaptive unit math) |
 | **`bin/`** | Ookla Speedtest CLI binary (`speedtest.exe`) |
 | **`assets/`** | App icons (`icon.ico`, `icon.png`) and branding assets |
 | **`release/`** | Production portable standalone Windows desktop executable (`PulseSentry.exe`) |

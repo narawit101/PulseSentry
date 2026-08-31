@@ -268,6 +268,22 @@ Product screenshots are framed in rounded `{rounded.lg}` / `{rounded.xl}` wells,
 
 - Properties: `backgroundColor`, `rounded`, `padding`, `typography`
 
+**`ex-export-button`** — Reusable table & telemetry CSV exporter button (`<ExportCsvButton />`).
+
+- Properties: `backgroundColor: {colors.surface}`, `hover: {colors.canvas-soft}`, `border: {colors.hairline}`, `rounded: {rounded.md}`, `iconColor: {colors.primary}`, `shadow: shadow-2xs`
+
+## Micro-Animations & Motion Design
+
+- **Tab & Stage Fade-In (`.ps-fade-in`)**:
+  - Keyframes: `0% { opacity: 0; transform: translateY(10px) scale(0.985); } 100% { opacity: 1; transform: translateY(0) scale(1); }`
+  - Duration & Easing: `240ms cubic-bezier(0.16, 1, 0.3, 1)`
+  - Hardware Acceleration: `will-change: transform, opacity; transform: translateZ(0);`
+- **Dial Needle Sweep (`SpeedGauge`)**:
+  - Transition: `transform 120ms ease-out`
+  - Dynamic Needle Pivot: Centered at `(120, 112)` with accurate 8-segment logarithmic angle calculation (`-120°` to `+120°`).
+- **Ping Radar Wave**:
+  - Double concentric SVG circles (`animate-ping` + `animate-spin` with `strokeDasharray: 4 4`) in `{colors.accent-orange}` indicating active socket discovery.
+
 ## Do's and Don'ts
 
 ### Do
@@ -288,3 +304,4 @@ Product screenshots are framed in rounded `{rounded.lg}` / `{rounded.xl}` wells,
 - Don't drop heavy shadows; Notion's elevation is many near-transparent layers, never a hard cast.
 - Don't set body copy in a heavy weight — keep 400 for readability and let weight 700 belong to headlines.
 - Don't place type on pure clinical white for full pages; the warm `{colors.canvas-soft}` is core to the brand calm.
+

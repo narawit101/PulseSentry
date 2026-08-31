@@ -7,6 +7,7 @@ export interface AppTraffic {
   totalUl: number; // MB
   sockets: number;
   icon?: string;
+  sticker?: string;
 }
 
 export interface SocketConnection {
