@@ -29,7 +29,7 @@ export default {
         'notion-hover': '0 4px 12px rgba(0, 0, 0, 0.06)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['var(--app-font)', 'Kanit', 'Outfit', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       }
     },

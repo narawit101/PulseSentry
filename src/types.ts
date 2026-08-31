@@ -40,3 +40,34 @@ export interface GeoRegion {
   orgs: string;
   traffic: string;
 }
+
+export type SpeedtestStage = 'idle' | 'ping' | 'download' | 'upload' | 'complete' | 'cancelled' | 'error';
+
+export interface SpeedtestProgress {
+  stage: SpeedtestStage;
+  percent: number;
+  mbps?: number;
+  ping?: number;
+  jitter?: number;
+  download_latency?: number;
+  upload_latency?: number;
+  download_mbps?: number;
+  upload_mbps?: number;
+  bytes?: number;
+  error?: string;
+}
+
+export interface SpeedtestResult {
+  id: string;
+  timestamp: string;
+  provider: string;
+  ping: number;
+  jitter: number;
+  download_latency?: number;
+  upload_latency?: number;
+  download_mbps: number;
+  upload_mbps: number;
+  result_url?: string;
+  status: string;
+}
+

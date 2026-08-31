@@ -37,25 +37,56 @@ class NetworkCollector:
     def _fetch_real_public_ip(self):
         if self._fetched_public_ip:
             return
+
+        # Tier 1 Resolver: Live IP-API (Org, ISP, City)
         try:
-            req = urllib.request.Request("http://ip-api.com/json/?fields=query,countryCode", headers={"User-Agent": "PulseSentry/1.0"})
+            req = urllib.request.Request(
+                "http://ip-api.com/json/?fields=query,countryCode,isp,org,city",
+                headers={"User-Agent": "PulseSentry/1.0"}
+            )
             with urllib.request.urlopen(req, timeout=4) as resp:
                 data = json.loads(resp.read().decode())
                 ip = data.get("query")
-                cc = data.get("countryCode", "TH")
+                org = data.get("org") or data.get("isp") or data.get("countryCode")
                 if ip:
-                    self.public_ip_info = f"{ip} ({cc})"
+                    self.public_ip_info = f"{ip} ({org})" if org else ip
                     self._fetched_public_ip = True
+                    return
         except Exception:
-            try:
-                with urllib.request.urlopen("https://api.ipify.org?format=json", timeout=4) as resp:
-                    data = json.loads(resp.read().decode())
-                    ip = data.get("ip")
-                    if ip:
-                        self.public_ip_info = f"{ip} (TH)"
-                        self._fetched_public_ip = True
-            except Exception:
-                self.public_ip_info = "172.20.10.4 (Local)"
+            pass
+
+        # Tier 2 Resolver: Live IPInfo.io (Dynamic IP + Org)
+        try:
+            req = urllib.request.Request(
+                "https://ipinfo.io/json",
+                headers={"User-Agent": "PulseSentry/1.0"}
+            )
+            with urllib.request.urlopen(req, timeout=4) as resp:
+                data = json.loads(resp.read().decode())
+                ip = data.get("ip")
+                org = data.get("org") or data.get("country")
+                if org and org.startswith("AS") and " " in org:
+                    org = org.split(" ", 1)[1]
+                if ip:
+                    self.public_ip_info = f"{ip} ({org})" if org else ip
+                    self._fetched_public_ip = True
+                    return
+        except Exception:
+            pass
+
+        # Tier 3 Resolver: Pure Public IP
+        try:
+            with urllib.request.urlopen("https://api.ipify.org?format=json", timeout=3) as resp:
+                data = json.loads(resp.read().decode())
+                ip = data.get("ip")
+                if ip:
+                    self.public_ip_info = f"{ip}"
+                    self._fetched_public_ip = True
+                    return
+        except Exception:
+            pass
+
+        self.public_ip_info = "Offline"
 
     def get_proc_name(self, pid: int) -> str:
         if pid == 0:

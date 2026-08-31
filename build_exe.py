@@ -63,6 +63,7 @@ def main():
         f'--add-data "dist;dist" '
         f'--add-data "agent;agent" '
         f'--add-data "assets;assets" '
+        f'--add-data "bin;bin" '
         f'--hidden-import "websockets" '
         f'--hidden-import "psutil" '
         f'--hidden-import "webview" '
@@ -78,6 +79,7 @@ def main():
         f'--hidden-import "agent.sentinel" '
         f'--hidden-import "agent.geoip" '
         f'--hidden-import "agent.pinger" '
+        f'--hidden-import "agent.speedtest_engine" '
         f'desktop_app.py'
     )
     

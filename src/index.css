@@ -1,10 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
+  --app-font: 'Kanit', 'Outfit', system-ui, -apple-system, sans-serif;
   --primary: #0075de;
   --primary-pressed: #005bab;
   --secondary: #213183;
@@ -25,11 +26,21 @@
   --sticker-green: #1aae39;
 }
 
+.font-th, html[lang="th"], body[data-lang="th"] {
+  --app-font: 'Kanit', 'Outfit', system-ui, -apple-system, sans-serif;
+  font-family: 'Kanit', 'Outfit', system-ui, -apple-system, sans-serif !important;
+}
+
+.font-en, html[lang="en"], body[data-lang="en"] {
+  --app-font: 'Outfit', 'Kanit', system-ui, -apple-system, sans-serif;
+  font-family: 'Outfit', 'Kanit', system-ui, -apple-system, sans-serif !important;
+}
+
 body {
   margin: 0;
   background-color: var(--canvas-soft);
   color: var(--ink-secondary);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--app-font), 'Kanit', 'Outfit', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -50,4 +61,35 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.25);
+}
+
+/* Custom Buttery Smooth GPU Fade Transitions */
+@keyframes psFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes psFadeOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.985);
+  }
+}
+
+.ps-fade-in {
+  animation: psFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.ps-fade-out {
+  animation: psFadeOut 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

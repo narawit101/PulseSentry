@@ -16,6 +16,7 @@ import {
   MapPin,
   Terminal,
   Languages,
+  Zap,
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -29,12 +30,19 @@ import {
   Filler,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import { AppTraffic, SocketConnection, ListeningPort } from "./types";
+import {
+  AppTraffic,
+  SocketConnection,
+  ListeningPort,
+  SpeedtestProgress,
+  SpeedtestResult,
+} from "./types";
 
 import { STICKER_COLORS, StickerColorKey } from "./constants/theme";
 import { MetricCard } from "./components/MetricCard";
+import { SpeedtestTab } from "./components/SpeedtestTab";
 import { translations, Language } from "./i18n/translations";
-import { formatDataVolume, formatRate } from "./utils/format";
+import { formatDataVolume, formatRate, formatMbps, formatMbpsSplit } from "./utils/format";
 
 ChartJS.register(
   CategoryScale,
@@ -51,8 +59,13 @@ export default function App() {
   const [lang, setLang] = useState<Language>("th");
   const [isLive, setIsLive] = useState(true);
   const [activeTab, setActiveTab] = useState<
-    "overview" | "apps" | "sockets" | "geoip" | "ports"
+    "overview" | "apps" | "sockets" | "geoip" | "ports" | "speedtest"
   >("overview");
+
+  // Sync HTML lang attribute for dynamic CSS font switching (Kanit for TH, Outfit for EN)
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const t = translations[lang];
 
@@ -68,6 +81,14 @@ export default function App() {
   const [sessionUploadedMB, setSessionUploadedMB] = useState(0);
   const [peakDlMB, setPeakDlMB] = useState(0);
   const [peakUlKB, setPeakUlKB] = useState(0);
+
+  // Built-in Speedtest State (In-Memory Session)
+  const [speedtestProgress, setSpeedtestProgress] = useState<SpeedtestProgress>({
+    stage: "idle",
+    percent: 0,
+  });
+  const [isSpeedtesting, setIsSpeedtesting] = useState(false);
+  const [speedtestHistory, setSpeedtestHistory] = useState<SpeedtestResult[]>([]);
 
   // Live Pings
   const [pingRouter, setPingRouter] = useState(0);
@@ -133,7 +154,34 @@ export default function App() {
           if (!isLive) return;
           try {
             const data = JSON.parse(event.data);
-            if (data.type === "TELEMETRY_SNAPSHOT") {
+            if (data.type === "SPEEDTEST_PROGRESS") {
+              setSpeedtestProgress(data);
+              if (
+                data.stage === "ping" ||
+                data.stage === "download" ||
+                data.stage === "upload"
+              ) {
+                setIsSpeedtesting(true);
+              } else if (data.stage === "cancelled" || data.stage === "error") {
+                setIsSpeedtesting(false);
+              }
+            } else if (data.type === "SPEEDTEST_COMPLETE") {
+              setIsSpeedtesting(false);
+              setSpeedtestProgress({ stage: "complete", percent: 100 });
+              if (data.result) {
+                setSpeedtestHistory((prev) => {
+                  const isDuplicate = prev.some(
+                    (item) => item.timestamp === data.result.timestamp,
+                  );
+                  if (isDuplicate) return prev;
+                  const newEntry: SpeedtestResult = {
+                    id: String(Date.now() + Math.random()),
+                    ...data.result,
+                  };
+                  return [newEntry, ...prev];
+                });
+              }
+            } else if (data.type === "TELEMETRY_SNAPSHOT") {
               if (data.rates) {
                 setTotalDlMB(data.rates.downloadMBs);
                 setTotalUlKB(data.rates.uploadKBs);
@@ -376,7 +424,7 @@ export default function App() {
         bodyColor: "#31302e",
         borderColor: "#e6e6e6",
         borderWidth: 1,
-        titleFont: { family: "Inter", size: 12, weight: 700 as any },
+        titleFont: { family: "Outfit, Kanit", size: 12, weight: 700 as any },
         bodyFont: { family: "JetBrains Mono", size: 12 },
         padding: 10,
         displayColors: false,
@@ -518,8 +566,55 @@ export default function App() {
     });
   }, [ports, portSort, portSearch, portProtocolFilter, portExposureFilter]);
 
+  // Speedtest Action Handlers
+  const handleStartSpeedtest = (provider: string, mode: "multi" | "single" = "multi") => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      setIsSpeedtesting(true);
+      setSpeedtestProgress({ stage: "ping", percent: 0 });
+      wsRef.current.send(
+        JSON.stringify({
+          action: "START_SPEEDTEST",
+          provider,
+          mode,
+        }),
+      );
+    }
+  };
+
+  const handleCancelSpeedtest = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          action: "CANCEL_SPEEDTEST",
+        }),
+      );
+      setIsSpeedtesting(false);
+      setSpeedtestProgress({ stage: "cancelled", percent: 0 });
+    }
+  };
+
+  const handleClearSpeedtestHistory = () => {
+    setSpeedtestHistory([]);
+  };
+
+  // Real live rates converted to Mbps (matching Speedtest units directly)
+  const liveDlMbps = isSpeedtesting && speedtestProgress.stage === "download"
+    ? speedtestProgress.mbps || 0
+    : totalDlMB * 8;
+
+  const liveUlMbps = isSpeedtesting && speedtestProgress.stage === "upload"
+    ? speedtestProgress.mbps || 0
+    : (totalUlKB * 8) / 1024;
+
+  const dlSplit = formatMbpsSplit(liveDlMbps);
+  const ulSplit = formatMbpsSplit(liveUlMbps);
+
   return (
-    <div className="min-h-screen flex flex-col bg-canvas-soft font-sans antialiased text-ink-charcoal">
+    <div
+      className={`min-h-screen flex flex-col bg-canvas-soft antialiased text-ink-charcoal ${
+        lang === "th" ? "font-th" : "font-en"
+      }`}
+    >
       {/* 1. Sticky Navigation Header (Notion Nav Chrome - Pixel-locked alignment) */}
       <header className="sticky top-0 z-50 bg-surface/95 backdrop-blur-md border-b border-hairline px-6 py-3 shadow-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-nowrap">
@@ -636,75 +731,63 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 flex flex-col gap-6">
         {/* 4 Feature Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Download Speed */}
-          <MetricCard
-            title={t.dlSpeed}
-            dotColor="bg-primary"
-            mainValue={
-              totalDlMB >= 1024
-                ? (totalDlMB / 1024).toFixed(2)
-                : totalDlMB >= 1
-                  ? totalDlMB.toFixed(2)
-                  : (totalDlMB * 1024).toFixed(1)
-            }
-            mainUnit={totalDlMB >= 1024 ? "GB/s" : totalDlMB >= 1 ? "MB/s" : "KB/s"}
-            mainUnitColor="text-primary"
-            icon={<DownloadCloud className="w-4 h-4" />}
-            iconBg="bg-[#EBF5FD]"
-            iconBorder="border-[#B8DCFA]"
-            iconColor="text-primary"
-            footerLeft={
-              <span className="whitespace-nowrap">
-                {t.sessionTotal}:{" "}
-                <strong className="text-ink font-mono">
-                  {formatDataVolume(sessionDownloadedMB)}
-                </strong>
-              </span>
-            }
-            footerRight={
-              <span className="text-primary font-mono whitespace-nowrap">
-                {t.peak}: {formatRate(peakDlMB)}
-              </span>
-            }
-          />
+              {/* Card 1: Download Speed */}
+              <MetricCard
+                title={t.dlSpeed}
+                dotColor="bg-primary"
+                mainValue={dlSplit.val}
+                mainUnit={dlSplit.unit}
+                mainUnitColor="text-primary"
+                icon={<DownloadCloud className="w-4 h-4" />}
+                iconBg="bg-[#EBF5FD]"
+                iconBorder="border-[#B8DCFA]"
+                iconColor="text-primary"
+                footerLeft={
+                  <span className="whitespace-nowrap">
+                    {t.sessionTotal}:{" "}
+                    <strong className="text-ink font-mono">
+                      {formatDataVolume(sessionDownloadedMB)}
+                    </strong>
+                  </span>
+                }
+                footerRight={
+                  <span className="text-primary font-mono whitespace-nowrap">
+                    {t.peak}: {formatMbps(peakDlMB * 8)}
+                  </span>
+                }
+              />
 
-          {/* Card 2: Upload Speed */}
-          <MetricCard
-            title={t.ulSpeed}
-            dotColor="bg-sticker-purple"
-            mainValue={
-              totalUlKB >= 1024 * 1024
-                ? (totalUlKB / (1024 * 1024)).toFixed(2)
-                : totalUlKB >= 1024
-                  ? (totalUlKB / 1024).toFixed(2)
-                  : totalUlKB.toFixed(1)
-            }
-            mainUnit={totalUlKB >= 1024 * 1024 ? "GB/s" : totalUlKB >= 1024 ? "MB/s" : "KB/s"}
-            mainUnitColor="text-[#78350f]"
-            icon={<UploadCloud className="w-4 h-4" />}
-            iconBg="bg-[#F6EEFE]"
-            iconBorder="border-[#E7D1FB]"
-            iconColor="text-[#391c57]"
-            footerLeft={
-              <span className="whitespace-nowrap">
-                {t.sessionTotal}:{" "}
-                <strong className="text-ink font-mono">
-                  {formatDataVolume(sessionUploadedMB)}
-                </strong>
-              </span>
-            }
-            footerRight={
-              <span className="text-[#78350f] font-mono whitespace-nowrap">
-                {t.peak}: {formatRate(peakUlKB / 1024)}
-              </span>
-            }
-          />
+              {/* Card 2: Upload Speed */}
+              <MetricCard
+                title={t.ulSpeed}
+                dotColor="bg-sticker-purple"
+                mainValue={ulSplit.val}
+                mainUnit={ulSplit.unit}
+                mainUnitColor="text-[#7e22ce]"
+                icon={<UploadCloud className="w-4 h-4" />}
+                iconBg="bg-[#F6EEFE]"
+                iconBorder="border-[#E7D1FB]"
+                iconColor="text-[#6b21a8]"
+                footerLeft={
+                  <span className="whitespace-nowrap">
+                    {t.sessionTotal}:{" "}
+                    <strong className="text-ink font-mono">
+                      {formatDataVolume(sessionUploadedMB)}
+                    </strong>
+                  </span>
+                }
+                footerRight={
+                  <span className="text-[#6b21a8] font-mono whitespace-nowrap">
+                    {t.peak}: {formatMbps((peakUlKB * 8) / 1024)}
+                  </span>
+                }
+              />
 
-          {/* Card 3: Active Sockets */}
-          <MetricCard
-            title={t.activeSockets}
-            dotColor="bg-sticker-green"
-            mainValue={sockets.length}
+              {/* Card 3: Active Sockets */}
+              <MetricCard
+                title={t.activeSockets}
+                dotColor="bg-sticker-green"
+                mainValue={sockets.length}
             badge={{
               text: "ESTABLISHED",
               bg: "bg-[#EBF8EE]",
@@ -764,6 +847,7 @@ export default function App() {
             { id: "sockets", label: t.tabSockets, icon: Radio },
             { id: "ports", label: t.tabPorts, icon: Shield },
             { id: "geoip", label: t.tabGeoip, icon: Globe },
+            { id: "speedtest", label: t.tabSpeedtest, icon: Zap },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1745,6 +1829,20 @@ export default function App() {
               </table>
             </div>
           </div>
+        )}
+
+        {/* TAB 6: SPEEDTEST */}
+        {activeTab === "speedtest" && (
+          <SpeedtestTab
+            t={t}
+            progress={speedtestProgress}
+            isRunning={isSpeedtesting}
+            history={speedtestHistory}
+            publicIP={publicIP}
+            onStartTest={handleStartSpeedtest}
+            onCancelTest={handleCancelSpeedtest}
+            onClearHistory={handleClearSpeedtestHistory}
+          />
         )}
       </main>
 
