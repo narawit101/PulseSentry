@@ -96,13 +96,13 @@ export const AppsTab: React.FC<AppsTabProps> = ({ apps, t, lang }) => {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-xs text-left">
+        <table className="w-full text-xs text-left min-w-[760px]">
           <thead>
             <tr className="text-ink-muted border-b border-hairline uppercase text-[10px] tracking-wider font-semibold font-mono">
-              <th className="pb-3 w-8 font-mono text-ink-faint">#</th>
+              <th className="py-2.5 px-3 w-10 font-mono text-ink-faint">#</th>
               <th
                 onClick={() => handleSort("name")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors min-w-[160px]"
               >
                 {t.colApp}{" "}
                 {appSort.key === "name"
@@ -113,7 +113,7 @@ export const AppsTab: React.FC<AppsTabProps> = ({ apps, t, lang }) => {
               </th>
               <th
                 onClick={() => handleSort("pid")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors w-24"
               >
                 PID{" "}
                 {appSort.key === "pid"
@@ -124,9 +124,9 @@ export const AppsTab: React.FC<AppsTabProps> = ({ apps, t, lang }) => {
               </th>
               <th
                 onClick={() => handleSort("dl")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors w-32"
               >
-                {t.colDl}{" "}
+                {t.colDlRate}{" "}
                 {appSort.key === "dl"
                   ? appSort.order === "asc"
                     ? "▲"
@@ -135,9 +135,9 @@ export const AppsTab: React.FC<AppsTabProps> = ({ apps, t, lang }) => {
               </th>
               <th
                 onClick={() => handleSort("ul")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors w-32"
               >
-                {t.colUl}{" "}
+                {t.colUlRate}{" "}
                 {appSort.key === "ul"
                   ? appSort.order === "asc"
                     ? "▲"
@@ -146,9 +146,9 @@ export const AppsTab: React.FC<AppsTabProps> = ({ apps, t, lang }) => {
               </th>
               <th
                 onClick={() => handleSort("totalDl")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors min-w-[140px]"
               >
-                {t.colTotalBandwidth}{" "}
+                {t.colSessionVol}{" "}
                 {appSort.key === "totalDl"
                   ? appSort.order === "asc"
                     ? "▲"
@@ -157,7 +157,7 @@ export const AppsTab: React.FC<AppsTabProps> = ({ apps, t, lang }) => {
               </th>
               <th
                 onClick={() => handleSort("sockets")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors w-28 text-right"
               >
                 {t.colSockets}{" "}
                 {appSort.key === "sockets"
@@ -190,25 +190,29 @@ export const AppsTab: React.FC<AppsTabProps> = ({ apps, t, lang }) => {
                     key={app.pid}
                     className="hover:bg-canvas-soft/50 transition-colors"
                   >
-                    <td className="py-3 font-mono text-ink-faint text-[11px]">
+                    <td className="py-2.5 px-3 font-mono text-ink-faint text-[11px]">
                       {idx + 1}
                     </td>
-                    <td className="py-3 font-semibold text-ink flex items-center gap-2">
-                      <span
-                        className={`w-2 h-2 rounded-full ${sticker.dot} shrink-0`}
-                      />
-                      <span>{app.name}</span>
+                    <td className="py-2.5 px-3 font-semibold text-ink">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`w-2 h-2 rounded-full ${sticker.dot} shrink-0`}
+                        />
+                        <span className="truncate max-w-[200px]" title={app.name}>
+                          {app.name}
+                        </span>
+                      </div>
                     </td>
-                    <td className="py-3 font-mono text-ink-faint">
+                    <td className="py-2.5 px-3 font-mono text-ink-faint">
                       #{app.pid}
                     </td>
-                    <td className="py-3 font-mono font-semibold text-primary">
+                    <td className="py-2.5 px-3 font-mono font-semibold text-primary">
                       {formatRate(app.dl)}
                     </td>
-                    <td className="py-3 font-mono font-semibold text-[#78350f]">
+                    <td className="py-2.5 px-3 font-mono font-semibold text-[#78350f]">
                       {formatRate(app.ul)}
                     </td>
-                    <td className="py-3 text-ink-muted font-mono">
+                    <td className="py-2.5 px-3 text-ink-muted font-mono">
                       <span className="text-primary font-medium">
                         {formatDataVolume(app.totalDl)}
                       </span>
@@ -217,7 +221,7 @@ export const AppsTab: React.FC<AppsTabProps> = ({ apps, t, lang }) => {
                         {formatDataVolume(app.totalUl)}
                       </span>
                     </td>
-                    <td className="py-3 text-ink font-semibold font-mono">
+                    <td className="py-2.5 px-3 text-ink font-semibold font-mono text-right">
                       {app.sockets}
                     </td>
                   </tr>

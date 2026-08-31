@@ -131,97 +131,97 @@ export const SocketsTab: React.FC<SocketsTabProps> = ({ sockets, t, lang }) => {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-xs text-left">
+        <table className="w-full text-xs text-left min-w-[960px]">
           <thead>
-            <tr className="text-ink-muted border-b border-hairline uppercase text-[10px] tracking-wider font-semibold font-mono">
-              <th className="pb-3 w-8 font-mono text-ink-faint">#</th>
+            <tr className="text-ink-muted border-b border-hairline uppercase text-[10px] tracking-wider font-semibold font-mono whitespace-nowrap">
+              <th className="py-2.5 px-3 w-10 font-mono text-ink-faint">#</th>
               <th
                 onClick={() => handleSort("proc")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors min-w-[180px]"
               >
-                {t.colApp}{" "}
-                {socketSort.key === "proc"
-                  ? socketSort.order === "asc"
-                    ? "▲"
-                    : "▼"
-                  : ""}
+                <div className="inline-flex items-center gap-1">
+                  <span>{t.colApp}</span>
+                  {socketSort.key === "proc" && (
+                    <span>{socketSort.order === "asc" ? "▲" : "▼"}</span>
+                  )}
+                </div>
               </th>
               <th
                 onClick={() => handleSort("proto")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors w-20"
               >
-                Proto{" "}
-                {socketSort.key === "proto"
-                  ? socketSort.order === "asc"
-                    ? "▲"
-                    : "▼"
-                  : ""}
+                <div className="inline-flex items-center gap-1">
+                  <span>Proto</span>
+                  {socketSort.key === "proto" && (
+                    <span>{socketSort.order === "asc" ? "▲" : "▼"}</span>
+                  )}
+                </div>
               </th>
               <th
                 onClick={() => handleSort("local")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors min-w-[180px]"
               >
-                {t.colLocal}{" "}
-                {socketSort.key === "local"
-                  ? socketSort.order === "asc"
-                    ? "▲"
-                    : "▼"
-                  : ""}
+                <div className="inline-flex items-center gap-1">
+                  <span>{t.colLocal}</span>
+                  {socketSort.key === "local" && (
+                    <span>{socketSort.order === "asc" ? "▲" : "▼"}</span>
+                  )}
+                </div>
               </th>
               <th
                 onClick={() => handleSort("remote")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors min-w-[190px]"
               >
-                {t.colRemote}{" "}
-                {socketSort.key === "remote"
-                  ? socketSort.order === "asc"
-                    ? "▲"
-                    : "▼"
-                  : ""}
+                <div className="inline-flex items-center gap-1">
+                  <span>{t.colRemote}</span>
+                  {socketSort.key === "remote" && (
+                    <span>{socketSort.order === "asc" ? "▲" : "▼"}</span>
+                  )}
+                </div>
               </th>
               <th
                 onClick={() => handleSort("status")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors w-28"
               >
-                {t.colStatus}{" "}
-                {socketSort.key === "status"
-                  ? socketSort.order === "asc"
-                    ? "▲"
-                    : "▼"
-                  : ""}
+                <div className="inline-flex items-center gap-1">
+                  <span>{t.colStatus}</span>
+                  {socketSort.key === "status" && (
+                    <span>{socketSort.order === "asc" ? "▲" : "▼"}</span>
+                  )}
+                </div>
               </th>
               <th
                 onClick={() => handleSort("org")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors min-w-[140px]"
               >
-                {t.colOrg}{" "}
-                {socketSort.key === "org"
-                  ? socketSort.order === "asc"
-                    ? "▲"
-                    : "▼"
-                  : ""}
+                <div className="inline-flex items-center gap-1">
+                  <span>{t.colOrg}</span>
+                  {socketSort.key === "org" && (
+                    <span>{socketSort.order === "asc" ? "▲" : "▼"}</span>
+                  )}
+                </div>
               </th>
               <th
                 onClick={() => handleSort("country")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors w-24"
               >
-                {t.colCountry}{" "}
-                {socketSort.key === "country"
-                  ? socketSort.order === "asc"
-                    ? "▲"
-                    : "▼"
-                  : ""}
+                <div className="inline-flex items-center gap-1">
+                  <span>{t.colCountry}</span>
+                  {socketSort.key === "country" && (
+                    <span>{socketSort.order === "asc" ? "▲" : "▼"}</span>
+                  )}
+                </div>
               </th>
               <th
                 onClick={() => handleSort("rtt")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors min-w-[110px] text-right"
               >
-                {t.colRtt}{" "}
-                {socketSort.key === "rtt"
-                  ? socketSort.order === "asc"
-                    ? "▲"
-                    : "▼"
-                  : ""}
+                <div className="inline-flex items-center justify-end gap-1 w-full">
+                  <span>{t.colRtt}</span>
+                  {socketSort.key === "rtt" && (
+                    <span>{socketSort.order === "asc" ? "▲" : "▼"}</span>
+                  )}
+                </div>
               </th>
             </tr>
           </thead>
@@ -243,28 +243,38 @@ export const SocketsTab: React.FC<SocketsTabProps> = ({ sockets, t, lang }) => {
                   key={idx}
                   className="hover:bg-canvas-soft/50 transition-colors"
                 >
-                  <td className="py-3 font-mono text-ink-faint text-[11px]">
+                  <td className="py-2.5 px-3 font-mono text-ink-faint text-[11px]">
                     {idx + 1}
                   </td>
-                  <td className="py-3 font-semibold text-ink flex items-center gap-2">
-                    <Terminal className="w-3.5 h-3.5 text-ink-faint" />
-                    {s.proc}{" "}
-                    <span className="text-ink-faint font-normal font-mono text-[11px]">
-                      #{s.pid}
-                    </span>
+                  <td className="py-2.5 px-3 font-semibold text-ink">
+                    <div className="flex items-center gap-2">
+                      <Terminal className="w-3.5 h-3.5 text-ink-faint shrink-0" />
+                      <span className="truncate max-w-[140px]" title={s.proc}>
+                        {s.proc}
+                      </span>
+                      <span className="text-ink-faint font-normal font-mono text-[11px] shrink-0">
+                        #{s.pid}
+                      </span>
+                    </div>
                   </td>
-                  <td className="py-3 font-mono text-ink-muted">
+                  <td className="py-2.5 px-3 font-mono text-ink-muted font-medium">
                     {s.proto}
                   </td>
-                  <td className="py-3 font-mono text-ink-faint">
+                  <td
+                    className="py-2.5 px-3 font-mono text-ink-faint text-[11px] truncate max-w-[180px]"
+                    title={s.local}
+                  >
                     {s.local}
                   </td>
-                  <td className="py-3 font-mono text-ink font-semibold">
+                  <td
+                    className="py-2.5 px-3 font-mono text-ink font-semibold truncate max-w-[190px]"
+                    title={s.remote}
+                  >
                     {s.remote}
                   </td>
-                  <td className="py-3 font-mono">
+                  <td className="py-2.5 px-3 font-mono">
                     <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                      className={`px-2 py-0.5 rounded text-[10px] font-semibold inline-block ${
                         s.status === "ESTABLISHED"
                           ? "bg-[#EBF8EE] text-[#0E5C1E]"
                           : s.status === "LISTEN"
@@ -275,13 +285,18 @@ export const SocketsTab: React.FC<SocketsTabProps> = ({ sockets, t, lang }) => {
                       {s.status}
                     </span>
                   </td>
-                  <td className="py-3 text-ink-muted">{s.org}</td>
-                  <td className="py-3 font-mono">
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-canvas-soft border border-hairline text-ink">
+                  <td
+                    className="py-2.5 px-3 text-ink-muted truncate max-w-[140px]"
+                    title={s.org}
+                  >
+                    {s.org}
+                  </td>
+                  <td className="py-2.5 px-3 font-mono">
+                    <span className="px-2 py-0.5 rounded text-[10px] bg-canvas-soft border border-hairline text-ink whitespace-nowrap">
                       {s.country}
                     </span>
                   </td>
-                  <td className="py-3 font-mono font-semibold">
+                  <td className="py-2.5 px-3 font-mono font-semibold text-right whitespace-nowrap">
                     <span
                       className={
                         s.rtt <= 5

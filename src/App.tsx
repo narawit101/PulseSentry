@@ -35,6 +35,7 @@ import {
   formatDataVolume,
   formatMbps,
   formatMbpsSplit,
+  formatDisplayPublicIP,
 } from "./utils/format";
 
 export default function App() {
@@ -378,9 +379,14 @@ export default function App() {
               <span>{localIP}</span>
             </div>
             <div className="h-3 w-px bg-hairline" />
-            <div className="flex items-center gap-1.5 font-mono text-ink">
-              <Globe className="w-3.5 h-3.5 text-ink-faint" />
-              <span>{publicIP}</span>
+            <div
+              className="flex items-center gap-1.5 font-mono text-ink cursor-help"
+              title={`Full IP: ${publicIP}`}
+            >
+              <Globe className="w-3.5 h-3.5 text-ink-faint shrink-0" />
+              <span className="truncate max-w-[220px]">
+                {formatDisplayPublicIP(publicIP)}
+              </span>
             </div>
           </div>
 
@@ -454,20 +460,20 @@ export default function App() {
             mainUnit={dlSplit.unit}
             mainUnitColor="text-primary"
             icon={<DownloadCloud className="w-4 h-4" />}
-            iconBg="bg-[#EBF5FD]"
-            iconBorder="border-[#B8DCFA]"
-            iconColor="text-primary"
             footerLeft={
-              <span className="whitespace-nowrap">
+              <span>
                 {t.sessionTotal}:{" "}
-                <strong className="text-ink font-mono">
+                <strong className="text-ink font-mono font-semibold">
                   {formatDataVolume(sessionDownloadedMB)}
                 </strong>
               </span>
             }
             footerRight={
-              <span className="text-primary font-mono whitespace-nowrap">
-                {t.peak}: {formatMbps(peakDlMB * 8)}
+              <span>
+                {t.peak}:{" "}
+                <strong className="text-ink font-mono font-semibold">
+                  {formatMbps(peakDlMB * 8)}
+                </strong>
               </span>
             }
           />
@@ -480,20 +486,20 @@ export default function App() {
             mainUnit={ulSplit.unit}
             mainUnitColor="text-[#7e22ce]"
             icon={<UploadCloud className="w-4 h-4" />}
-            iconBg="bg-[#F6EEFE]"
-            iconBorder="border-[#E7D1FB]"
-            iconColor="text-[#6b21a8]"
             footerLeft={
-              <span className="whitespace-nowrap">
+              <span>
                 {t.sessionTotal}:{" "}
-                <strong className="text-ink font-mono">
+                <strong className="text-ink font-mono font-semibold">
                   {formatDataVolume(sessionUploadedMB)}
                 </strong>
               </span>
             }
             footerRight={
-              <span className="text-[#6b21a8] font-mono whitespace-nowrap">
-                {t.peak}: {formatMbps((peakUlKB * 8) / 1024)}
+              <span>
+                {t.peak}:{" "}
+                <strong className="text-ink font-mono font-semibold">
+                  {formatMbps((peakUlKB * 8) / 1024)}
+                </strong>
               </span>
             }
           />
@@ -503,26 +509,19 @@ export default function App() {
             title={t.activeSockets}
             dotColor="bg-sticker-green"
             mainValue={sockets.length}
-            badge={{
-              text: "ESTABLISHED",
-              bg: "bg-[#EBF8EE]",
-              textCol: "text-[#0E5C1E]",
-            }}
+            mainUnit="ESTABLISHED"
+            mainUnitColor="text-[#0E5C1E]"
             icon={<Radio className="w-4 h-4" />}
-            iconBg="bg-[#EBF8EE]"
-            iconBorder="border-[#C0ECC9]"
-            iconColor="text-[#0E5C1E]"
             footerLeft={
-              <span className="whitespace-nowrap">
-                TCP: {sockets.filter((s) => s.proto === "TCP").length} | UDP:{" "}
-                {sockets.filter((s) => s.proto === "UDP").length}
+              <span>
+                TCP: <strong className="text-ink font-mono font-semibold">{sockets.filter((s) => s.proto === "TCP").length}</strong> • UDP: <strong className="text-ink font-mono font-semibold">{sockets.filter((s) => s.proto === "UDP").length}</strong>
               </span>
             }
             footerRight={
-              <span className="text-ink font-mono whitespace-nowrap">
+              <span>
                 {sockets.length > 0
                   ? `${new Set(sockets.map((s) => s.remote.split(":")[0])).size} ${t.hosts}`
-                  : "0 Hosts"}
+                  : `0 ${t.hosts}`}
               </span>
             }
           />
@@ -532,23 +531,17 @@ export default function App() {
             title={t.openPorts}
             dotColor="bg-sticker-orange"
             mainValue={ports.length}
-            badge={{
-              text: "OPEN",
-              bg: "bg-[#FEF0E6]",
-              textCol: "text-[#793400]",
-            }}
+            mainUnit="LISTENING"
+            mainUnitColor="text-[#793400]"
             icon={<ShieldCheck className="w-4 h-4" />}
-            iconBg="bg-[#FEF0E6]"
-            iconBorder="border-[#FCD1B0]"
-            iconColor="text-[#793400]"
             footerLeft={
-              <span className="text-amber-600 font-semibold whitespace-nowrap">
-                {ports.filter((p) => p.exposed).length} {t.exposed}
+              <span>
+                <strong className="text-ink font-mono font-semibold">{ports.filter((p) => p.exposed).length}</strong> {t.exposed}
               </span>
             }
             footerRight={
-              <span className="whitespace-nowrap">
-                {ports.filter((p) => !p.exposed).length} {t.localhost}
+              <span>
+                <strong className="text-ink font-mono font-semibold">{ports.filter((p) => !p.exposed).length}</strong> {t.localhost}
               </span>
             }
           />

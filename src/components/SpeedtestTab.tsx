@@ -7,6 +7,7 @@ import { ServerSelectModal } from "./speedtest/ServerSelectModal";
 import { SpeedGauge } from "./speedtest/SpeedGauge";
 import { SpeedtestScorecard } from "./speedtest/SpeedtestScorecard";
 import { SpeedtestHistoryTable } from "./speedtest/SpeedtestHistoryTable";
+import { formatShortIsp } from "../utils/format";
 
 interface SpeedtestTabProps {
   t: TranslationDict;
@@ -30,7 +31,9 @@ export const SpeedtestTab: React.FC<SpeedtestTabProps> = ({
   onClearHistory,
 }) => {
   const [selectedServerId, setSelectedServerId] = useState<string>("auto");
-  const [connectionMode, setConnectionMode] = useState<"multi" | "single">("multi");
+  const [connectionMode, setConnectionMode] = useState<"multi" | "single">(
+    "multi",
+  );
   const [isServerModalOpen, setIsServerModalOpen] = useState(false);
   const [serverSearch, setServerSearch] = useState("");
   const [measuredDl, setMeasuredDl] = useState<number>(0);
@@ -80,9 +83,10 @@ export const SpeedtestTab: React.FC<SpeedtestTabProps> = ({
   const isIdle = !isRunning && latest === null;
 
   // Extract clean ISP name and IP
-  const ispName = publicIP.includes("(")
+  const rawIsp = publicIP.includes("(")
     ? publicIP.split("(")[1].replace(")", "")
     : "3BB";
+  const ispName = formatShortIsp(rawIsp) || "3BB";
   const cleanIp = publicIP.split(" ")[0] || "183.88.225.63";
 
   return (
@@ -101,9 +105,9 @@ export const SpeedtestTab: React.FC<SpeedtestTabProps> = ({
                 <Zap className="w-5 h-5 text-primary" />
                 <span>{t.speedtestTitle}</span>
               </h3>
-              <p className="text-xs text-ink-muted mt-1 max-w-sm mx-auto">
+              {/* <p className="text-xs text-ink-muted mt-1 max-w-sm mx-auto">
                 {t.speedtestDesc || "ทดสอบความเร็วและการเชื่อมต่ออินเทอร์เน็ตแบบเรียลไทม์"}
-              </p>
+              </p> */}
             </div>
 
             {/* Circular GO Action Button */}

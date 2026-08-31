@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Search, Shield, ShieldCheck } from "lucide-react";
+import { Search } from "lucide-react";
 import { ListeningPort } from "../types";
 import { ExportCsvButton } from "./ExportCsvButton";
 import { Language } from "../i18n/translations";
@@ -135,13 +135,13 @@ export const PortsTab: React.FC<PortsTabProps> = ({ ports, t, lang }) => {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-xs text-left">
+        <table className="w-full text-xs text-left min-w-[850px]">
           <thead>
             <tr className="text-ink-muted border-b border-hairline uppercase text-[10px] tracking-wider font-semibold font-mono">
-              <th className="pb-3 w-8 font-mono text-ink-faint">#</th>
+              <th className="py-2.5 px-3 w-10 font-mono text-ink-faint">#</th>
               <th
                 onClick={() => handleSort("port")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors w-24"
               >
                 Port{" "}
                 {portSort.key === "port"
@@ -152,7 +152,7 @@ export const PortsTab: React.FC<PortsTabProps> = ({ ports, t, lang }) => {
               </th>
               <th
                 onClick={() => handleSort("proto")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors w-20"
               >
                 Proto{" "}
                 {portSort.key === "proto"
@@ -163,7 +163,7 @@ export const PortsTab: React.FC<PortsTabProps> = ({ ports, t, lang }) => {
               </th>
               <th
                 onClick={() => handleSort("proc")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors min-w-[150px]"
               >
                 Process{" "}
                 {portSort.key === "proc"
@@ -174,7 +174,7 @@ export const PortsTab: React.FC<PortsTabProps> = ({ ports, t, lang }) => {
               </th>
               <th
                 onClick={() => handleSort("pid")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors w-20"
               >
                 PID{" "}
                 {portSort.key === "pid"
@@ -185,7 +185,7 @@ export const PortsTab: React.FC<PortsTabProps> = ({ ports, t, lang }) => {
               </th>
               <th
                 onClick={() => handleSort("addr")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors min-w-[150px]"
               >
                 Address{" "}
                 {portSort.key === "addr"
@@ -196,7 +196,7 @@ export const PortsTab: React.FC<PortsTabProps> = ({ ports, t, lang }) => {
               </th>
               <th
                 onClick={() => handleSort("desc")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors min-w-[160px]"
               >
                 Description{" "}
                 {portSort.key === "desc"
@@ -207,7 +207,7 @@ export const PortsTab: React.FC<PortsTabProps> = ({ ports, t, lang }) => {
               </th>
               <th
                 onClick={() => handleSort("exposed")}
-                className="pb-3 cursor-pointer select-none hover:text-ink transition-colors"
+                className="py-2.5 px-3 cursor-pointer select-none hover:text-ink transition-colors min-w-[200px] text-right whitespace-nowrap"
               >
                 Security Exposure{" "}
                 {portSort.key === "exposed"
@@ -236,39 +236,49 @@ export const PortsTab: React.FC<PortsTabProps> = ({ ports, t, lang }) => {
                   key={idx}
                   className="hover:bg-canvas-soft/50 transition-colors"
                 >
-                  <td className="py-3 font-mono text-ink-faint text-[11px]">
+                  <td className="py-2.5 px-3 font-mono text-ink-faint text-[11px]">
                     {idx + 1}
                   </td>
-                  <td className="py-3 font-mono font-bold text-primary text-sm">
+                  <td className="py-2.5 px-3 font-mono font-bold text-primary text-sm">
                     :{p.port}
                   </td>
-                  <td className="py-3 font-mono text-ink-muted">
+                  <td className="py-2.5 px-3 font-mono text-ink-muted">
                     {p.proto}
                   </td>
-                  <td className="py-3 font-semibold text-ink">
-                    {p.proc}
+                  <td className="py-2.5 px-3 font-semibold text-ink">
+                    <div className="truncate max-w-[150px]" title={p.proc}>
+                      {p.proc}
+                    </div>
                   </td>
-                  <td className="py-3 font-mono text-ink-faint">
-                    {p.pid}
+                  <td className="py-2.5 px-3 font-mono text-ink-faint">
+                    #{p.pid}
                   </td>
-                  <td className="py-3 font-mono text-ink-muted">
+                  <td
+                    className="py-2.5 px-3 font-mono text-ink-muted truncate max-w-[150px]"
+                    title={p.addr}
+                  >
                     {p.addr}
                   </td>
-                  <td className="py-3 text-ink-muted">{p.desc}</td>
-                  <td className="py-3">
+                  <td
+                    className="py-2.5 px-3 text-ink-muted truncate max-w-[160px]"
+                    title={p.desc}
+                  >
+                    {p.desc}
+                  </td>
+                  <td className="py-2.5 px-3 text-right whitespace-nowrap">
                     <span
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1.5 w-fit ${
+                      className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium inline-flex items-center gap-1.5 whitespace-nowrap border ${
                         p.exposed
-                          ? "bg-[#FEF0E6] text-[#793400] border border-[#FCD1B0]"
-                          : "bg-[#EBF8EE] text-[#0E5C1E] border border-[#C0ECC9]"
+                          ? "bg-[#FEF0E6] text-[#793400] border-[#FCD1B0]"
+                          : "bg-canvas-soft text-ink-muted border-hairline"
                       }`}
                     >
-                      {p.exposed ? (
-                        <Shield className="w-3 h-3" />
-                      ) : (
-                        <ShieldCheck className="w-3 h-3" />
-                      )}
-                      {p.exposed ? t.exposed : t.localhost}
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                          p.exposed ? "bg-sticker-orange" : "bg-ink-faint"
+                        }`}
+                      />
+                      <span>{p.exposed ? t.exposed : t.localhost}</span>
                     </span>
                   </td>
                 </tr>
