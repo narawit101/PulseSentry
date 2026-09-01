@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { SpeedtestProgress, SpeedtestResult } from "../../types";
 import { TranslationDict } from "../../i18n/translations";
+import { calculateQoE } from "../../utils/qoe";
 
 interface SpeedGaugeProps {
   t: TranslationDict;
@@ -45,56 +46,17 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
 }) => {
   const currentMbps = progress.mbps || 0;
 
-  // Real Dynamic QoE Rating Calculator
-  const getQoE = () => {
-    const dl =
-      progress.stage === "download"
-        ? progress.mbps || 0
-        : latest?.download_mbps || progress.mbps || 0;
-    const ul =
-      progress.stage === "upload"
-        ? progress.mbps || 0
-        : latest?.upload_mbps || 0;
-    const ping = progress.ping || latest?.ping || 25;
-    const jitter = progress.jitter || latest?.jitter || 2;
-
-    let web = 1;
-    if (dl >= 25 && ping <= 50) web = 5;
-    else if (dl >= 15 && ping <= 80) web = 4;
-    else if (dl >= 5 && ping <= 120) web = 3;
-    else if (dl >= 2) web = 2;
-
-    let game = 1;
-    if (ping <= 30 && jitter <= 5) game = 5;
-    else if (ping <= 55 && jitter <= 12) game = 4;
-    else if (ping <= 85 && jitter <= 20) game = 3;
-    else if (ping <= 130) game = 2;
-
-    let video = 1;
-    if (dl >= 50 && jitter <= 15) video = 5;
-    else if (dl >= 25) video = 4;
-    else if (dl >= 10) video = 3;
-    else if (dl >= 5) video = 2;
-
-    let call = 1;
-    if (ul >= 15 && jitter <= 8 && ping <= 50) call = 5;
-    else if (ul >= 5 && jitter <= 18 && ping <= 90) call = 4;
-    else if (ul >= 2 && jitter <= 30) call = 3;
-    else if (ul >= 1) call = 2;
-
-    return {
-      web,
-      game,
-      video,
-      call,
-      webDesc: `Web: ${web}/5 (${dl.toFixed(1)} Mbps, Ping ${Math.round(ping)}ms)`,
-      gameDesc: `Gaming: ${game}/5 (Ping ${Math.round(ping)}ms, Jitter ${jitter.toFixed(1)}ms)`,
-      videoDesc: `4K Stream: ${video}/5 (${dl.toFixed(1)} Mbps)`,
-      callDesc: `Video Call: ${call}/5 (Upload ${ul.toFixed(1)} Mbps, Jitter ${jitter.toFixed(1)}ms)`,
-    };
-  };
-
-  const qoe = getQoE();
+  // Real Dynamic QoE Rating Calculator (Single Source of Truth)
+  const qoe = calculateQoE(
+    progress.stage === "download"
+      ? progress.mbps || 0
+      : latest?.download_mbps || progress.mbps || 0,
+    progress.stage === "upload"
+      ? progress.mbps || 0
+      : latest?.upload_mbps || 0,
+    progress.ping || latest?.ping || 25,
+    progress.jitter || latest?.jitter || 2
+  );
 
   const gaugePercent =
     progress.stage === "ping"
