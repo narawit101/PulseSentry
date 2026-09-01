@@ -16,7 +16,7 @@ import { AppTraffic, SocketConnection } from "../types";
 import { STICKER_COLORS, StickerColorKey } from "../constants/theme";
 import { ExportCsvButton } from "./ExportCsvButton";
 import { formatDataVolume, formatRate, formatMbps } from "../utils/format";
-import { Language } from "../i18n/translations";
+import { Language, TranslationDict } from "../i18n/translations";
 
 ChartJS.register(
   CategoryScale,
@@ -40,7 +40,7 @@ const TIMEFRAME_OPTIONS = [
 
 interface OverviewTabProps {
   lang: Language;
-  t: any;
+  t: TranslationDict;
   fullHistory: { dl: number[]; ul: number[]; ts: number[] };
   sessionDownloadedMB: number;
   sessionUploadedMB: number;

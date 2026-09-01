@@ -2,11 +2,11 @@ import React, { useState, useMemo } from "react";
 import { Search } from "lucide-react";
 import { ListeningPort } from "../types";
 import { ExportCsvButton } from "./ExportCsvButton";
-import { Language } from "../i18n/translations";
+import { Language, TranslationDict } from "../i18n/translations";
 
 interface PortsTabProps {
   ports: ListeningPort[];
-  t: any;
+  t: TranslationDict;
   lang: Language;
 }
 

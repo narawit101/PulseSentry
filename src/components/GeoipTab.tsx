@@ -1,12 +1,12 @@
 import React from "react";
 import { Globe, Radio, Server } from "lucide-react";
 import { ExportCsvButton } from "./ExportCsvButton";
-import { Language } from "../i18n/translations";
+import { Language, TranslationDict } from "../i18n/translations";
 import { GeoRegionItem } from "../types";
 
 interface GeoipTabProps {
   geoRegions: GeoRegionItem[];
-  t: any;
+  t: TranslationDict;
   lang: Language;
 }
 

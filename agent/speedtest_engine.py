@@ -134,6 +134,7 @@ class SpeedtestEngine:
             current_ul_latency = 0.0
             smoothed_mbps = 0.0
             last_notify_time = 0.0
+            dl_settled = False
 
             await self._notify_progress("ping", 0, {
                 "ping": 0, "jitter": 0, "download_latency": 0, "upload_latency": 0, "mbps": 0.0
@@ -192,10 +193,36 @@ class SpeedtestEngine:
                             })
 
                     elif msg_type == "upload":
+                        if not dl_settled:
+                            dl_settled = True
+                            result["download_mbps"] = round(smoothed_mbps, 2)
+                            # 1. Lock in 100% Download Settled state
+                            await self._notify_progress("download", 100, {
+                                "mbps": result["download_mbps"],
+                                "download_mbps": result["download_mbps"],
+                                "ping": current_ping,
+                                "jitter": current_jitter,
+                                "download_latency": current_dl_latency or current_ping,
+                            })
+                            # 2. Smooth 0.5s transition pause so user sees download score lock in
+                            await asyncio.sleep(1.2)
+                            smoothed_mbps = 0.0
+                            last_notify_time = time.perf_counter()
+                            # 3. Clean initial upload start at 0.00 Mbps
+                            await self._notify_progress("upload", 0, {
+                                "mbps": 0.0,
+                                "ping": current_ping,
+                                "jitter": current_jitter,
+                                "download_latency": current_dl_latency,
+                                "download_mbps": result["download_mbps"],
+                                "upload_latency": current_ping,
+                            })
+                            await asyncio.sleep(0.1)
+
                         ul_info = data.get("upload", {})
                         bandwidth = ul_info.get("bandwidth", 0)
                         instant_mbps = round((bandwidth * 8) / 1_000_000, 2)
-                        smoothed_mbps = instant_mbps if smoothed_mbps == 0 or result["download_mbps"] > 0 else (smoothed_mbps * 0.65) + (instant_mbps * 0.35)
+                        smoothed_mbps = instant_mbps if smoothed_mbps == 0 else (smoothed_mbps * 0.65) + (instant_mbps * 0.35)
 
                         pct = int(ul_info.get("progress", 0) * 100)
                         lat_info = ul_info.get("latency", {})
@@ -413,7 +440,7 @@ class SpeedtestEngine:
             "jitter": result["jitter"],
             "download_latency": result["download_latency"],
         })
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(1.2)
 
         # -------------------------------------------------------------
         # STAGE 3: UPLOAD BENCHMARK (15 seconds, Multi-Threaded)

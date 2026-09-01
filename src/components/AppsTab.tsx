@@ -4,11 +4,11 @@ import { AppTraffic } from "../types";
 import { STICKER_COLORS, StickerColorKey } from "../constants/theme";
 import { ExportCsvButton } from "./ExportCsvButton";
 import { formatDataVolume, formatRate } from "../utils/format";
-import { Language } from "../i18n/translations";
+import { Language, TranslationDict } from "../i18n/translations";
 
 interface AppsTabProps {
   apps: AppTraffic[];
-  t: any;
+  t: TranslationDict;
   lang: Language;
 }
 

@@ -2,11 +2,11 @@ import React, { useState, useMemo } from "react";
 import { Search, Terminal } from "lucide-react";
 import { SocketConnection } from "../types";
 import { ExportCsvButton } from "./ExportCsvButton";
-import { Language } from "../i18n/translations";
+import { Language, TranslationDict } from "../i18n/translations";
 
 interface SocketsTabProps {
   sockets: SocketConnection[];
-  t: any;
+  t: TranslationDict;
   lang: Language;
 }
 

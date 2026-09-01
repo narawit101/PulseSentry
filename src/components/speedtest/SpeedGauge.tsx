@@ -133,32 +133,41 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
 
         {/* DOWNLOAD Card */}
         <div
-          className={`p-4 rounded-xl border transition-all ${
+          className={`p-4 rounded-xl border transition-all duration-500 ease-out ${
             progress.stage === "download"
-              ? "bg-[#EBF5FD] border-[#B8DCFA] ring-2 ring-primary/20 shadow-xs"
-              : "bg-canvas-soft border-hairline"
+              ? "bg-[#EBF5FD] border-[#B8DCFA] ring-2 ring-primary/20 shadow-xs scale-[1.02]"
+              : measuredDl > 0 || progress.stage === "upload" || progress.stage === "complete"
+                ? "bg-[#F7FAFD] border-[#D4E7F7]"
+                : "bg-canvas-soft border-hairline"
           } flex flex-col justify-between`}
         >
           <div className="flex items-center justify-between text-xs font-semibold text-ink-muted mb-1">
             <div className="flex items-center gap-1.5">
               <ArrowDownCircle
-                className={`w-4 h-4 ${
+                className={`w-4 h-4 transition-colors duration-300 ${
                   progress.stage === "download"
                     ? "text-primary animate-pulse"
-                    : "text-ink-faint"
+                    : measuredDl > 0 || progress.stage === "upload"
+                      ? "text-primary/70"
+                      : "text-ink-faint"
                 }`}
               />
               <span
-                className={
+                className={`transition-colors duration-300 ${
                   progress.stage === "download" ? "text-primary font-bold" : ""
-                }
+                }`}
               >
                 DOWNLOAD
               </span>
               <span className="text-[10px] text-ink-faint">Mbps</span>
             </div>
+            {(measuredDl > 0 || progress.stage === "upload") && progress.stage !== "download" && (
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-primary/10 text-primary font-semibold animate-in fade-in duration-300">
+                SETTLED
+              </span>
+            )}
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-ink tracking-tight">
+          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-ink tracking-tight transition-all duration-300">
             {progress.stage === "download"
               ? (progress.mbps || 0).toFixed(2)
               : measuredDl > 0
@@ -174,32 +183,32 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
 
         {/* UPLOAD Card */}
         <div
-          className={`p-4 rounded-xl border transition-all ${
+          className={`p-4 rounded-xl border transition-all duration-500 ease-out ${
             progress.stage === "upload"
-              ? "bg-[#F6EEFE] border-[#E7D1FB] ring-2 ring-[#7e22ce]/20 shadow-xs"
+              ? "bg-[#F6EEFE] border-[#E7D1FB] ring-2 ring-[#7e22ce]/20 shadow-xs scale-[1.02]"
               : "bg-canvas-soft border-hairline"
           } flex flex-col justify-between`}
         >
           <div className="flex items-center justify-between text-xs font-semibold text-ink-muted mb-1">
             <div className="flex items-center gap-1.5">
               <ArrowUpCircle
-                className={`w-4 h-4 ${
+                className={`w-4 h-4 transition-colors duration-300 ${
                   progress.stage === "upload"
                     ? "text-[#6b21a8] animate-pulse"
                     : "text-ink-faint"
                 }`}
               />
               <span
-                className={
+                className={`transition-colors duration-300 ${
                   progress.stage === "upload" ? "text-[#6b21a8] font-bold" : ""
-                }
+                }`}
               >
                 UPLOAD
               </span>
               <span className="text-[10px] text-ink-faint">Mbps</span>
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-ink tracking-tight">
+          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-ink tracking-tight transition-all duration-300">
             {progress.stage === "upload"
               ? (progress.mbps || 0).toFixed(2)
               : "—"}
@@ -295,7 +304,7 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
             strokeLinecap="round"
           />
 
-          {/* Progress Arc */}
+          {/* Progress Arc with Smooth Transition */}
           <path
             d="M 48.99 153 A 82 82 0 1 1 191.01 153"
             fill="none"
@@ -304,7 +313,7 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
             strokeLinecap="round"
             strokeDasharray="343.5"
             strokeDashoffset={343.5 - 343.5 * gaugePercent}
-            style={{ transition: "stroke-dashoffset 120ms ease-out" }}
+            style={{ transition: "stroke-dashoffset 240ms cubic-bezier(0.16, 1, 0.3, 1), stroke 450ms ease" }}
           />
 
           {/* Dial Tick Notches */}
@@ -346,7 +355,7 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
           {/* Sweeping Needle */}
           <g
             transform={`translate(120, 112) rotate(${needleAngle})`}
-            style={{ transition: "transform 120ms ease-out" }}
+            style={{ transition: "transform 240ms cubic-bezier(0.16, 1, 0.3, 1)" }}
           >
             <line x1="0" y1="0" x2="0" y2="-72" stroke="#18181b" strokeWidth="3" strokeLinecap="round" />
             <circle
@@ -360,6 +369,7 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
                     ? "#7e22ce"
                     : "#0075de"
               }
+              style={{ transition: "fill 450ms ease" }}
             />
             <circle cx="0" cy="0" r="2.5" fill="#ffffff" />
           </g>
@@ -387,16 +397,22 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
             </div>
           ) : (
             <div className="flex flex-col items-center">
-              <span className="text-4xl lg:text-5xl font-black text-ink font-mono tracking-tight leading-none">
+              <span className="text-4xl lg:text-5xl font-black text-ink font-mono tracking-tight leading-none transition-all duration-200">
                 {currentMbps.toFixed(2)}
               </span>
               <div className="flex items-center gap-1.5 text-xs font-bold mt-1.5">
                 {progress.stage === "upload" ? (
-                  <span className="text-[#7e22ce] flex items-center gap-1 bg-[#F6EEFE] px-2 py-0.5 rounded-full border border-[#E7D1FB]">
+                  <span
+                    key="upload-pill"
+                    className="text-[#7e22ce] flex items-center gap-1 bg-[#F6EEFE] px-2 py-0.5 rounded-full border border-[#E7D1FB] animate-in fade-in zoom-in-95 duration-300"
+                  >
                     <ArrowUp className="w-3 h-3" /> UPLOAD Mbps
                   </span>
                 ) : (
-                  <span className="text-primary flex items-center gap-1 bg-[#EBF5FD] px-2 py-0.5 rounded-full border border-[#B8DCFA]">
+                  <span
+                    key="download-pill"
+                    className="text-primary flex items-center gap-1 bg-[#EBF5FD] px-2 py-0.5 rounded-full border border-[#B8DCFA] animate-in fade-in zoom-in-95 duration-300"
+                  >
                     <ArrowDown className="w-3 h-3" /> DOWNLOAD Mbps
                   </span>
                 )}
@@ -408,17 +424,19 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
 
       {/* Progress Stage Bar */}
       {(progress.stage === "download" || progress.stage === "upload") && (
-        <div className="w-full mt-2 mb-4 animate-in fade-in duration-200">
+        <div className="w-full mt-2 mb-4 animate-in fade-in duration-300">
           <div className="flex items-center justify-between text-xs font-semibold mb-1.5 px-0.5">
             <span className="text-ink-muted flex items-center gap-1.5 font-sans">
               <span
-                className={`w-2 h-2 rounded-full ${
+                className={`w-2 h-2 rounded-full transition-colors duration-400 ${
                   progress.stage === "upload" ? "bg-[#7e22ce]" : "bg-primary"
                 } animate-pulse`}
               />
-              {progress.stage === "download"
-                ? t.speedtestStageDl
-                : t.speedtestStageUl}
+              <span className="transition-all duration-300 font-medium">
+                {progress.stage === "download"
+                  ? t.speedtestStageDl
+                  : t.speedtestStageUl}
+              </span>
             </span>
             <span className="text-ink font-mono font-bold">
               {Math.round(progress.percent || 0)}%
@@ -426,7 +444,7 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
           </div>
           <div className="w-full h-2 rounded-full bg-canvas-soft border border-hairline overflow-hidden p-0.5">
             <div
-              className={`h-full rounded-full transition-all duration-150 ${
+              className={`h-full rounded-full transition-all duration-300 ease-out ${
                 progress.stage === "upload" ? "bg-[#7e22ce]" : "bg-primary"
               }`}
               style={{ width: `${Math.min(100, progress.percent || 0)}%` }}
