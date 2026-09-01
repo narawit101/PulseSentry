@@ -26,26 +26,26 @@ export function calculateQoE(
   else if (dl >= 2 && ping <= 150) web = 3;
   else if (dl >= 1) web = 2;
 
-  // 2. Online Gaming
+  // 2. Online Gaming (Weighted Ping & Jitter)
   let game = 1;
-  if (ping <= 20 && jitter <= 5) game = 5; // Pro Gaming / Competitive
-  else if (ping <= 50 && jitter <= 15) game = 4; // Smooth Casual Gaming
-  else if (ping <= 100 && jitter <= 30) game = 3; // Playable with minor lag
-  else if (ping <= 150 && jitter <= 50) game = 2;
+  if (ping <= 25 && jitter <= 20) game = 5; // Pro Esports / Competitive
+  else if (ping <= 60 && jitter <= 60) game = 4; // Smooth Casual / MMO / FPS
+  else if (ping <= 120 && jitter <= 90) game = 3; // Playable with minor lag
+  else if (ping <= 200) game = 2; // Noticeable lag
 
-  // 3. 4K/HD Video Streaming
+  // 3. 4K/HD Video Streaming (Based on Netflix / YouTube Bitrate)
   let video = 1;
-  if (dl >= 25) video = 5; // Netflix 4K UHD Requirement
+  if (dl >= 25) video = 5; // 4K Ultra HD / Multi-Stream
   else if (dl >= 15) video = 4; // 1080p FHD Smart TV
   else if (dl >= 5) video = 3; // 720p HD Mobile
   else if (dl >= 3) video = 2; // 480p SD
 
-  // 4. Video Calls & Conferences
+  // 4. Video Calls & Conferences (Zoom / Teams / Discord)
   let call = 1;
-  if (ul >= 4 && ping <= 150 && jitter <= 10) call = 5; // Zoom HD / High Fidelity
-  else if (ul >= 2 && ping <= 200 && jitter <= 20) call = 4;
-  else if (ul >= 1 && ping <= 300 && jitter <= 30) call = 3;
-  else if (ul >= 0.5) call = 2;
+  if (ul >= 5 && ping <= 120 && jitter <= 30) call = 5; // Zoom HD / Studio Quality
+  else if (ul >= 2 && ping <= 180 && jitter <= 70) call = 4; // Smooth HD Video Call
+  else if (ul >= 1 && ping <= 250 && jitter <= 120) call = 3; // Standard Call / Audio
+  else if (ul >= 0.5) call = 2; // Low Res / Voice Only
 
   return {
     web,
