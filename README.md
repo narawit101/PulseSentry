@@ -167,7 +167,7 @@ You can double-click **`release/PulseSentry/PulseSentry.exe`** to run the app on
 | **`agent/`** | Python OS Telemetry Daemon (`psutil`, WebSocket server `ws://127.0.0.1:8765`, Threat Sentinel heuristics, ICMP/TCP Pinger, MaxMind/IP-API GeoIP, and Hybrid Speedtest Engine) |
 | **`src/components/`** | Modular React Tab Architecture (`OverviewTab`, `AppsTab`, `SocketsTab`, `PortsTab`, `GeoipTab`, `SpeedtestTab`, `MetricCard`, `ExportCsvButton`) |
 | **`src/components/speedtest/`** | Sub-components for Speedtest Suite (`SpeedGauge`, `SpeedtestScorecard`, `SpeedtestHistoryTable`, `ServerSelectModal`) |
-| **`src/utils/`** | Core utilities (`csv.ts` UTF-8 BOM engine, `format.ts` adaptive unit math) |
+| **`src/utils/`** | Core utilities (`csv.ts` UTF-8 BOM engine, `format.ts` adaptive unit math, `qoe.ts` ITU-T calibrated QoE engine) |
 | **`bin/`** | Ookla Speedtest CLI binary (`speedtest.exe`) |
 | **`assets/`** | App icons (`icon.ico`, `icon.png`) and branding assets |
 | **`release/`** | Production portable standalone Windows desktop executable (`PulseSentry.exe`) |

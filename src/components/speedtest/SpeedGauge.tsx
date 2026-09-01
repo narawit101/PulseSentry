@@ -1,10 +1,10 @@
 import React from "react";
 import {
   Activity,
-  ArrowDownCircle,
-  ArrowUpCircle,
   ArrowDown,
+  ArrowDownCircle,
   ArrowUp,
+  ArrowUpCircle,
   Gamepad2,
   Monitor,
   PlaySquare,

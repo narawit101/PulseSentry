@@ -26,6 +26,7 @@ class NetworkCollector:
         self.session_downloaded_bytes = 0
         self.session_uploaded_bytes = 0
 
+        self._lock = threading.Lock()
         self.proc_cache = {}
         self.proc_totals = {}
         self.public_ip_info = "กำลังค้นหา..."
@@ -91,12 +92,14 @@ class NetworkCollector:
     def get_proc_name(self, pid: int) -> str:
         if pid == 0:
             return "System Kernel / Closed"
-        if pid in self.proc_cache:
-            return self.proc_cache[pid]
+        with self._lock:
+            if pid in self.proc_cache:
+                return self.proc_cache[pid]
         try:
             p = psutil.Process(pid)
             name = p.name()
-            self.proc_cache[pid] = name
+            with self._lock:
+                self.proc_cache[pid] = name
             return name
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             return f"Process #{pid}"
@@ -226,16 +229,19 @@ class NetworkCollector:
             # 3. Per-Process aggregation
             if pid != 0:
                 if pid not in app_stats:
-                    if pid not in self.proc_totals:
-                        self.proc_totals[pid] = {"dl_bytes": 0, "ul_bytes": 0}
+                    with self._lock:
+                        if pid not in self.proc_totals:
+                            self.proc_totals[pid] = {"dl_bytes": 0, "ul_bytes": 0}
+                        t_dl = round(self.proc_totals[pid]["dl_bytes"] / (1024 * 1024), 2)
+                        t_ul = round(self.proc_totals[pid]["ul_bytes"] / (1024 * 1024), 2)
 
                     app_stats[pid] = {
                         "name": proc_name,
                         "pid": pid,
                         "dl": 0.0,
                         "ul": 0.0,
-                        "totalDl": round(self.proc_totals[pid]["dl_bytes"] / (1024 * 1024), 2),
-                        "totalUl": round(self.proc_totals[pid]["ul_bytes"] / (1024 * 1024), 2),
+                        "totalDl": t_dl,
+                        "totalUl": t_ul,
                         "sockets": 0
                     }
                 app_stats[pid]["sockets"] += 1
@@ -249,10 +255,11 @@ class NetworkCollector:
             active_apps[0]["ul"] = primary_ul
 
             p_pid = active_apps[0]["pid"]
-            self.proc_totals[p_pid]["dl_bytes"] += int(primary_dl * 1024 * 1024 * elapsed)
-            self.proc_totals[p_pid]["ul_bytes"] += int(primary_ul * 1024 * 1024 * elapsed)
-            active_apps[0]["totalDl"] = round(self.proc_totals[p_pid]["dl_bytes"] / (1024 * 1024), 2)
-            active_apps[0]["totalUl"] = round(self.proc_totals[p_pid]["ul_bytes"] / (1024 * 1024), 2)
+            with self._lock:
+                self.proc_totals[p_pid]["dl_bytes"] += int(primary_dl * 1024 * 1024 * elapsed)
+                self.proc_totals[p_pid]["ul_bytes"] += int(primary_ul * 1024 * 1024 * elapsed)
+                active_apps[0]["totalDl"] = round(self.proc_totals[p_pid]["dl_bytes"] / (1024 * 1024), 2)
+                active_apps[0]["totalUl"] = round(self.proc_totals[p_pid]["ul_bytes"] / (1024 * 1024), 2)
 
             for i, a in enumerate(active_apps):
                 a["sticker"] = STICKER_KEYS[i % len(STICKER_KEYS)]
@@ -263,10 +270,11 @@ class NetworkCollector:
                     a["ul"] = sub_ul
                     
                     sub_pid = a["pid"]
-                    self.proc_totals[sub_pid]["dl_bytes"] += int(sub_dl * 1024 * 1024 * elapsed)
-                    self.proc_totals[sub_pid]["ul_bytes"] += int(sub_ul * 1024 * 1024 * elapsed)
-                    a["totalDl"] = round(self.proc_totals[sub_pid]["dl_bytes"] / (1024 * 1024), 2)
-                    a["totalUl"] = round(self.proc_totals[sub_pid]["ul_bytes"] / (1024 * 1024), 2)
+                    with self._lock:
+                        self.proc_totals[sub_pid]["dl_bytes"] += int(sub_dl * 1024 * 1024 * elapsed)
+                        self.proc_totals[sub_pid]["ul_bytes"] += int(sub_ul * 1024 * 1024 * elapsed)
+                        a["totalDl"] = round(self.proc_totals[sub_pid]["dl_bytes"] / (1024 * 1024), 2)
+                        a["totalUl"] = round(self.proc_totals[sub_pid]["ul_bytes"] / (1024 * 1024), 2)
 
         ping_stats = self.pinger.update_all()
         listening_ports.sort(key=lambda p: p["port"])

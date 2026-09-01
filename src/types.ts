@@ -33,13 +33,12 @@ export interface ListeningPort {
   exposed: boolean;
 }
 
-export interface GeoRegion {
+export interface GeoRegionItem {
   country: string;
-  flag: string;
-  code: string;
+  code?: string;
   count: number;
-  ping: string;
   orgs: string;
+  ping: string;
   traffic: string;
 }
 

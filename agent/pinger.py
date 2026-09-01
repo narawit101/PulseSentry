@@ -32,26 +32,18 @@ class LatencyChecker:
         return "192.168.1.1"
 
     def tcp_ping(self, host: str, port: int = 53, timeout: float = 0.4) -> int:
-        """Measure latency via fast non-blocking TCP connect"""
-        start = time.perf_counter()
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(timeout)
-            sock.connect((host, port))
-            sock.close()
-            elapsed_ms = int((time.perf_counter() - start) * 1000)
-            return max(1, elapsed_ms)
-        except Exception:
+        """Measure latency via fast non-blocking TCP connect with guaranteed socket cleanup"""
+        for target_port in [port, 80 if port != 80 else 443]:
+            start = time.perf_counter()
             try:
-                start = time.perf_counter()
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(timeout)
-                sock.connect((host, 80 if port != 80 else 443))
-                sock.close()
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                    sock.settimeout(timeout)
+                    sock.connect((host, target_port))
                 elapsed_ms = int((time.perf_counter() - start) * 1000)
                 return max(1, elapsed_ms)
             except Exception:
-                return -1
+                continue
+        return -1
 
     def _background_worker(self):
         """Continuous background updater - never stalls main thread"""

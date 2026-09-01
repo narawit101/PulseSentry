@@ -2,15 +2,7 @@ import React from "react";
 import { Globe, Radio, Server } from "lucide-react";
 import { ExportCsvButton } from "./ExportCsvButton";
 import { Language } from "../i18n/translations";
-
-export interface GeoRegionItem {
-  country: string;
-  code?: string;
-  count: number;
-  orgs: string;
-  ping: string;
-  traffic: string;
-}
+import { GeoRegionItem } from "../types";
 
 interface GeoipTabProps {
   geoRegions: GeoRegionItem[];
