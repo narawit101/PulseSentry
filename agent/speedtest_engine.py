@@ -205,7 +205,7 @@ class SpeedtestEngine:
                                 "download_latency": current_dl_latency or current_ping,
                             })
                             # 2. Smooth 0.5s transition pause so user sees download score lock in
-                            await asyncio.sleep(1.2)
+                            await asyncio.sleep(0.6)
                             smoothed_mbps = 0.0
                             last_notify_time = time.perf_counter()
                             # 3. Clean initial upload start at 0.00 Mbps
@@ -440,7 +440,7 @@ class SpeedtestEngine:
             "jitter": result["jitter"],
             "download_latency": result["download_latency"],
         })
-        await asyncio.sleep(1.2)
+        await asyncio.sleep(0.6)
 
         # -------------------------------------------------------------
         # STAGE 3: UPLOAD BENCHMARK (15 seconds, Multi-Threaded)
