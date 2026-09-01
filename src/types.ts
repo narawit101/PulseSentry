@@ -19,6 +19,7 @@ export interface SocketConnection {
   status: 'ESTABLISHED' | 'LISTEN' | 'TIME_WAIT' | 'CLOSE_WAIT';
   org: string;
   country: string;
+  code?: string;
   rtt: number;
 }
 

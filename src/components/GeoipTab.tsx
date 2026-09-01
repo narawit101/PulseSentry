@@ -3,8 +3,9 @@ import { Globe, Radio, Server } from "lucide-react";
 import { ExportCsvButton } from "./ExportCsvButton";
 import { Language } from "../i18n/translations";
 
-interface GeoRegionItem {
+export interface GeoRegionItem {
   country: string;
+  code?: string;
   count: number;
   orgs: string;
   ping: string;
@@ -16,45 +17,6 @@ interface GeoipTabProps {
   t: any;
   lang: Language;
 }
-
-// Clean Country ISO Code Resolver (No emojis)
-const getCountryCode = (country: string): string => {
-  const c = country.toLowerCase().trim();
-  if (c.includes("united states") || c === "us" || c === "usa") return "US";
-  if (c.includes("singapore") || c === "sg") return "SG";
-  if (c.includes("thailand") || c === "th") return "TH";
-  if (c.includes("japan") || c === "jp") return "JP";
-  if (c.includes("germany") || c === "de") return "DE";
-  if (c.includes("india") || c === "in") return "IN";
-  if (
-    c.includes("united kingdom") ||
-    c.includes("britain") ||
-    c === "uk" ||
-    c === "gb"
-  )
-    return "GB";
-  if (c.includes("australia") || c === "au") return "AU";
-  if (c.includes("canada") || c === "ca") return "CA";
-  if (c.includes("france") || c === "fr") return "FR";
-  if (c.includes("netherlands") || c.includes("holland") || c === "nl")
-    return "NL";
-  if (c.includes("hong kong") || c === "hk") return "HK";
-  if (c.includes("taiwan") || c === "tw") return "TW";
-  if (c.includes("south korea") || c.includes("korea") || c === "kr")
-    return "KR";
-  if (c.includes("china") || c === "cn") return "CN";
-  if (c.includes("ireland") || c === "ie") return "IE";
-  if (c.includes("finland") || c === "fi") return "FI";
-  if (c.includes("sweden") || c === "se") return "SE";
-  if (
-    c.includes("lan") ||
-    c.includes("local") ||
-    c.includes("loopback") ||
-    c === "local network"
-  )
-    return "LAN";
-  return country.slice(0, 2).toUpperCase();
-};
 
 export const GeoipTab: React.FC<GeoipTabProps> = ({ geoRegions, t, lang }) => {
   return (
@@ -73,6 +35,7 @@ export const GeoipTab: React.FC<GeoipTabProps> = ({ geoRegions, t, lang }) => {
             headers={[
               "No",
               "Country",
+              "Code",
               "Active Sockets",
               "Organizations",
               "Estimated Traffic",
@@ -80,6 +43,7 @@ export const GeoipTab: React.FC<GeoipTabProps> = ({ geoRegions, t, lang }) => {
             rows={geoRegions.map((region, idx) => [
               idx + 1,
               region.country,
+              region.code || "EXT",
               region.count,
               region.orgs,
               region.traffic,
@@ -96,8 +60,15 @@ export const GeoipTab: React.FC<GeoipTabProps> = ({ geoRegions, t, lang }) => {
             </div>
           ) : (
             geoRegions.map((region, idx) => {
-              const code = getCountryCode(region.country);
-              const isLan = code === "LAN";
+              // Dynamic ISO Code from Telemetry (no hardcoding needed)
+              const code = (
+                region.code ||
+                (region.country === "LAN"
+                  ? "LAN"
+                  : region.country.slice(0, 2))
+              ).toUpperCase();
+              const isLan =
+                code === "LAN" || region.country.toUpperCase() === "LAN";
 
               return (
                 <div

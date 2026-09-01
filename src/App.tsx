@@ -236,7 +236,7 @@ export default function App() {
 
   // Aggregated GeoIP Regions
   const geoRegions = useMemo(() => {
-    const counts: Record<string, { count: number; orgs: Set<string> }> = {};
+    const counts: Record<string, { count: number; code: string; orgs: Set<string> }> = {};
     sockets.forEach((s) => {
       if (
         s.country &&
@@ -245,9 +245,16 @@ export default function App() {
         s.country !== "LOCAL"
       ) {
         if (!counts[s.country]) {
-          counts[s.country] = { count: 0, orgs: new Set() };
+          counts[s.country] = {
+            count: 0,
+            code: s.code || (s.country === "LAN" ? "LAN" : s.country.slice(0, 2).toUpperCase()),
+            orgs: new Set(),
+          };
         }
         counts[s.country].count += 1;
+        if (s.code) {
+          counts[s.country].code = s.code;
+        }
         if (s.org && s.org !== "Local / Unknown") {
           counts[s.country].orgs.add(s.org);
         }
@@ -257,16 +264,17 @@ export default function App() {
     return Object.entries(counts)
       .map(([country, data]) => ({
         country,
+        code: data.code,
         count: data.count,
         orgs:
           Array.from(data.orgs).slice(0, 3).join(", ") ||
           "Direct Connection",
         ping:
-          country === "TH"
+          data.code === "TH"
             ? "< 15ms"
-            : country === "SG"
+            : data.code === "SG"
               ? "~35ms"
-              : country === "US"
+              : data.code === "US"
                 ? "~180ms"
                 : "~120ms",
         traffic: `${(data.count * 1.2).toFixed(1)} MB`,
