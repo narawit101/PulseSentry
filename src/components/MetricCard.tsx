@@ -12,7 +12,7 @@ export interface MetricCardProps {
   footerRight?: React.ReactNode;
 }
 
-export const MetricCard: React.FC<MetricCardProps> = ({
+export const MetricCard: React.FC<MetricCardProps> = React.memo(({
   title,
   dotColor,
   icon,
@@ -70,4 +70,4 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       </div>
     </div>
   );
-};
+});

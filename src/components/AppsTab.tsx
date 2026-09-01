@@ -33,7 +33,7 @@ export const AppsTab: React.FC<AppsTabProps> = ({ apps, t, lang }) => {
         a.pid.toString().includes(appSearch),
     );
 
-    return [...filtered].sort((a, b) => {
+    return filtered.sort((a, b) => {
       const valA = a[appSort.key];
       const valB = b[appSort.key];
       if (typeof valA === "string" && typeof valB === "string") {

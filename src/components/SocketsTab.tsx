@@ -43,7 +43,7 @@ export const SocketsTab: React.FC<SocketsTabProps> = ({ sockets, t, lang }) => {
   }, [sockets, socketSearch, protocolFilter, statusFilter]);
 
   const sortedSockets = useMemo(() => {
-    return [...filteredSockets].sort((a, b) => {
+    return filteredSockets.slice().sort((a, b) => {
       const valA = a[socketSort.key];
       const valB = b[socketSort.key];
       if (typeof valA === "string" && typeof valB === "string") {

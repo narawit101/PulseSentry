@@ -182,7 +182,7 @@ If port `8765` is busy or you want to terminate background Python processes:
 
 **PowerShell:**
 ```powershell
-Stop-Process -Name python -Force -ErrorAction SilentlyContinue
+Get-Process -Name python -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 ```
 
 **Command Prompt (CMD):**

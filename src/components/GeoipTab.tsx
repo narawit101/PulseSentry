@@ -1,16 +1,70 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Globe, Radio, Server } from "lucide-react";
 import { ExportCsvButton } from "./ExportCsvButton";
 import { Language, TranslationDict } from "../i18n/translations";
-import { GeoRegionItem } from "../types";
+import { SocketConnection, GeoRegionItem } from "../types";
 
 interface GeoipTabProps {
-  geoRegions: GeoRegionItem[];
+  sockets?: SocketConnection[];
+  geoRegions?: GeoRegionItem[];
   t: TranslationDict;
   lang: Language;
 }
 
-export const GeoipTab: React.FC<GeoipTabProps> = ({ geoRegions, t, lang }) => {
+export const GeoipTab: React.FC<GeoipTabProps> = ({
+  sockets = [],
+  geoRegions: explicitRegions,
+  t,
+  lang,
+}) => {
+  // Lazy evaluation: Computed only when GeoipTab is mounted & active
+  const regions = useMemo<GeoRegionItem[]>(() => {
+    if (explicitRegions) return explicitRegions;
+
+    const counts: Record<string, { count: number; code: string; orgs: Set<string> }> = {};
+    sockets.forEach((s) => {
+      if (
+        s.country &&
+        s.country !== "Unknown" &&
+        s.country !== "-" &&
+        s.country !== "LOCAL"
+      ) {
+        if (!counts[s.country]) {
+          counts[s.country] = {
+            count: 0,
+            code: s.code || (s.country === "LAN" ? "LAN" : s.country.slice(0, 2).toUpperCase()),
+            orgs: new Set(),
+          };
+        }
+        counts[s.country].count += 1;
+        if (s.code) {
+          counts[s.country].code = s.code;
+        }
+        if (s.org && s.org !== "Local / Unknown") {
+          counts[s.country].orgs.add(s.org);
+        }
+      }
+    });
+
+    return Object.entries(counts)
+      .map(([country, data]) => ({
+        country,
+        code: data.code,
+        count: data.count,
+        orgs: Array.from(data.orgs).slice(0, 3).join(", ") || "Direct Connection",
+        ping:
+          data.code === "TH"
+            ? "< 15ms"
+            : data.code === "SG"
+              ? "~35ms"
+              : data.code === "US"
+                ? "~180ms"
+                : "~120ms",
+        traffic: `${(data.count * 1.2).toFixed(1)} MB`,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [sockets, explicitRegions]);
+
   return (
     <div className="flex flex-col gap-6 ps-fade-in">
       <div className="bg-surface rounded-xl border border-hairline p-6 shadow-notion-card">
@@ -32,7 +86,7 @@ export const GeoipTab: React.FC<GeoipTabProps> = ({ geoRegions, t, lang }) => {
               "Organizations",
               "Estimated Traffic",
             ]}
-            rows={geoRegions.map((region, idx) => [
+            rows={regions.map((region, idx) => [
               idx + 1,
               region.country,
               region.code || "EXT",
@@ -44,15 +98,14 @@ export const GeoipTab: React.FC<GeoipTabProps> = ({ geoRegions, t, lang }) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {geoRegions.length === 0 ? (
+          {regions.length === 0 ? (
             <div className="col-span-full py-12 text-center text-xs text-ink-muted bg-canvas-soft rounded-xl border border-hairline font-mono">
               {lang === "th"
                 ? "กำลังดึงข้อมูลตำแหน่งปลายทางจาก Socket จริงในเครื่อง..."
                 : "Resolving remote destinations from active sockets..."}
             </div>
           ) : (
-            geoRegions.map((region, idx) => {
-              // Dynamic ISO Code from Telemetry (no hardcoding needed)
+            regions.map((region, idx) => {
               const code = (
                 region.code ||
                 (region.country === "LAN"

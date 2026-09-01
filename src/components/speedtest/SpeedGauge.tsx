@@ -37,6 +37,42 @@ export const getLogGaugePercent = (mbps: number): number => {
   return 1.0;
 };
 
+// Static SVG Scale Dial Memoized for 60-120 FPS needle performance
+const StaticGaugeDial = React.memo(() => (
+  <g>
+    {/* Background Track Arc */}
+    <path
+      d="M 48.99 153 A 82 82 0 1 1 191.01 153"
+      fill="none"
+      stroke="#f0efed"
+      strokeWidth="10"
+      strokeLinecap="round"
+    />
+
+    {/* Dial Tick Notches */}
+    <line x1="55.0" y1="149.5" x2="46.4" y2="154.5" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="45.0" y1="112.0" x2="35.0" y2="112.0" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="55.0" y1="74.5" x2="46.4" y2="69.5" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="82.5" y1="47.1" x2="77.5" y2="38.4" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="120.0" y1="37.0" x2="120.0" y2="27.0" stroke="#a1a1aa" strokeWidth="2.0" strokeLinecap="round" />
+    <line x1="157.5" y1="47.1" x2="162.5" y2="38.4" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="185.0" y1="74.5" x2="193.6" y2="69.5" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="195.0" y1="112.0" x2="205.0" y2="112.0" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="185.0" y1="149.5" x2="193.6" y2="154.5" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
+
+    {/* Scale Numbers */}
+    <text x="70" y="141" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">0</text>
+    <text x="62" y="115" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">5</text>
+    <text x="70" y="85" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">10</text>
+    <text x="91" y="63" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">50</text>
+    <text x="120" y="55" fontSize="8.5" fontWeight="800" fill="#18181b" textAnchor="middle" fontFamily="sans-serif">100</text>
+    <text x="149" y="63" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">250</text>
+    <text x="170" y="85" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">500</text>
+    <text x="178" y="115" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">750</text>
+    <text x="170" y="141" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">1000</text>
+  </g>
+));
+
 export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
   t,
   progress,
@@ -295,16 +331,10 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
       {/* Center Speedometer Dial */}
       <div className="relative w-full max-w-[360px] aspect-[1/0.88] flex flex-col items-center justify-center my-6">
         <svg viewBox="0 0 240 190" className="w-full h-full overflow-visible">
-          {/* Background Track Arc */}
-          <path
-            d="M 48.99 153 A 82 82 0 1 1 191.01 153"
-            fill="none"
-            stroke="#f0efed"
-            strokeWidth="10"
-            strokeLinecap="round"
-          />
+          {/* Static Background Track, Tick Notches, & Scale Numbers */}
+          <StaticGaugeDial />
 
-          {/* Progress Arc with Smooth Transition */}
+          {/* Dynamic Progress Arc with Smooth Transition */}
           <path
             d="M 48.99 153 A 82 82 0 1 1 191.01 153"
             fill="none"
@@ -315,17 +345,6 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
             strokeDashoffset={343.5 - 343.5 * gaugePercent}
             style={{ transition: "stroke-dashoffset 240ms cubic-bezier(0.16, 1, 0.3, 1), stroke 450ms ease" }}
           />
-
-          {/* Dial Tick Notches */}
-          <line x1="55.0" y1="149.5" x2="46.4" y2="154.5" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="45.0" y1="112.0" x2="35.0" y2="112.0" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="55.0" y1="74.5" x2="46.4" y2="69.5" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="82.5" y1="47.1" x2="77.5" y2="38.4" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="120.0" y1="37.0" x2="120.0" y2="27.0" stroke="#a1a1aa" strokeWidth="2.0" strokeLinecap="round" />
-          <line x1="157.5" y1="47.1" x2="162.5" y2="38.4" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="185.0" y1="74.5" x2="193.6" y2="69.5" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="195.0" y1="112.0" x2="205.0" y2="112.0" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="185.0" y1="149.5" x2="193.6" y2="154.5" stroke="#d4d4d8" strokeWidth="1.5" strokeLinecap="round" />
 
           {/* Radar Ripple Animation during Ping Stage */}
           {progress.stage === "ping" && (
@@ -373,17 +392,6 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
             />
             <circle cx="0" cy="0" r="2.5" fill="#ffffff" />
           </g>
-
-          {/* Scale Numbers */}
-          <text x="70" y="141" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">0</text>
-          <text x="62" y="115" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">5</text>
-          <text x="70" y="85" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">10</text>
-          <text x="91" y="63" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">50</text>
-          <text x="120" y="55" fontSize="8.5" fontWeight="800" fill="#18181b" textAnchor="middle" fontFamily="sans-serif">100</text>
-          <text x="149" y="63" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">250</text>
-          <text x="170" y="85" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">500</text>
-          <text x="178" y="115" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">750</text>
-          <text x="170" y="141" fontSize="7.5" fontWeight="700" fill="#52525b" textAnchor="middle" fontFamily="sans-serif">1000</text>
         </svg>
 
         {/* Digital Speed Readout */}

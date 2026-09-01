@@ -58,7 +58,6 @@ export default function App() {
     network,
     fullHistory,
     speedtest,
-    geoRegions,
   } = useTelemetry(isLive);
 
   const {
@@ -370,7 +369,7 @@ export default function App() {
 
         {/* TAB 4: GEOIP MAP */}
         {activeTab === "geoip" && (
-          <GeoipTab geoRegions={geoRegions} t={t} lang={lang} />
+          <GeoipTab sockets={sockets} t={t} lang={lang} />
         )}
 
         {/* TAB 5: PORT SCANNER */}

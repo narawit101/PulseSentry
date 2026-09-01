@@ -1,11 +1,10 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   AppTraffic,
   SocketConnection,
   ListeningPort,
   SpeedtestProgress,
   SpeedtestResult,
-  GeoRegionItem,
 } from "../types";
 
 export interface TelemetryRates {
@@ -38,18 +37,34 @@ export interface HistoryBuffer {
 }
 
 export function useTelemetry(isLive: boolean = true) {
-  // Core Telemetry State
+  // Core Telemetry Collections
   const [apps, setApps] = useState<AppTraffic[]>([]);
   const [sockets, setSockets] = useState<SocketConnection[]>([]);
   const [ports, setPorts] = useState<ListeningPort[]>([]);
 
-  // Bandwidth & Traffic Metrics
-  const [totalDlMB, setTotalDlMB] = useState(0);
-  const [totalUlKB, setTotalUlKB] = useState(0);
-  const [sessionDownloadedMB, setSessionDownloadedMB] = useState(0);
-  const [sessionUploadedMB, setSessionUploadedMB] = useState(0);
-  const [peakDlMB, setPeakDlMB] = useState(0);
-  const [peakUlKB, setPeakUlKB] = useState(0);
+  // Consolidated Rates State (Single Batch Dispatch)
+  const [rateMetrics, setRateMetrics] = useState({
+    totalDlMB: 0,
+    totalUlKB: 0,
+    sessionDownloadedMB: 0,
+    sessionUploadedMB: 0,
+    peakDlMB: 0,
+    peakUlKB: 0,
+  });
+
+  // Consolidated Pings State (Single Batch Dispatch)
+  const [pings, setPings] = useState<TelemetryPings>({
+    router: 0,
+    cloudflare: 0,
+    google: 0,
+  });
+
+  // Network Identifiers
+  const [network, setNetwork] = useState<TelemetryNetwork>({
+    activeAdapter: "ตรวจจับอัตโนมัติ",
+    localIP: "127.0.0.1",
+    publicIP: "กำลังตรวจสอบ...",
+  });
 
   // Speedtest State
   const [speedtestProgress, setSpeedtestProgress] = useState<SpeedtestProgress>({
@@ -58,16 +73,6 @@ export function useTelemetry(isLive: boolean = true) {
   });
   const [isSpeedtesting, setIsSpeedtesting] = useState(false);
   const [speedtestHistory, setSpeedtestHistory] = useState<SpeedtestResult[]>([]);
-
-  // Live Pings
-  const [pingRouter, setPingRouter] = useState(0);
-  const [pingCloudflare, setPingCloudflare] = useState(0);
-  const [pingGoogle, setPingGoogle] = useState(0);
-
-  // Network Info
-  const [activeAdapter, setActiveAdapter] = useState("ตรวจจับอัตโนมัติ");
-  const [localIP, setLocalIP] = useState("127.0.0.1");
-  const [publicIP, setPublicIP] = useState("กำลังตรวจสอบ...");
 
   // Chart History Buffer (Max 3600 points = 1 Hour)
   const [fullHistory, setFullHistory] = useState<HistoryBuffer>({
@@ -118,8 +123,8 @@ export function useTelemetry(isLive: boolean = true) {
               setIsSpeedtesting(false);
               setSpeedtestProgress({ stage: "complete", percent: 100 });
               if (data.result) {
-                setSpeedtestHistory((prev) => {
-                  const newEntry: SpeedtestResult = {
+                setSpeedtestHistory((prev) => [
+                  {
                     id: Date.now().toString(),
                     timestamp: new Date().toLocaleTimeString([], {
                       hour: "2-digit",
@@ -135,9 +140,9 @@ export function useTelemetry(isLive: boolean = true) {
                     provider: data.result.provider || "Auto Selected",
                     result_url: data.result.result_url,
                     status: "success",
-                  };
-                  return [newEntry, ...prev];
-                });
+                  },
+                  ...prev,
+                ]);
               }
             } else if (
               data.type === "TELEMETRY_SNAPSHOT" ||
@@ -145,26 +150,30 @@ export function useTelemetry(isLive: boolean = true) {
               (typeof data.type === "string" && data.type.startsWith("TELEMETRY"))
             ) {
               if (!isLiveRef.current) return;
+
               if (data.rates) {
-                if (data.rates.downloadMBs !== undefined)
-                  setTotalDlMB(data.rates.downloadMBs);
-                if (data.rates.uploadKBs !== undefined)
-                  setTotalUlKB(data.rates.uploadKBs);
-                if (data.rates.sessionDownloadedMB !== undefined)
-                  setSessionDownloadedMB(data.rates.sessionDownloadedMB);
-                else if (data.rates.sessionDownloadedGB !== undefined)
-                  setSessionDownloadedMB(data.rates.sessionDownloadedGB * 1024);
-                if (data.rates.sessionUploadedMB !== undefined)
-                  setSessionUploadedMB(data.rates.sessionUploadedMB);
-                if (data.rates.downloadMBs !== undefined)
-                  setPeakDlMB((prev) => Math.max(prev, data.rates.downloadMBs));
-                if (data.rates.uploadKBs !== undefined)
-                  setPeakUlKB((prev) => Math.max(prev, data.rates.uploadKBs));
+                const dl = Number(data.rates.downloadMBs || 0);
+                const ul = Number(data.rates.uploadKBs || 0);
+                const sessDl = data.rates.sessionDownloadedMB !== undefined
+                  ? Number(data.rates.sessionDownloadedMB)
+                  : data.rates.sessionDownloadedGB !== undefined
+                    ? Number(data.rates.sessionDownloadedGB) * 1024
+                    : 0;
+                const sessUl = Number(data.rates.sessionUploadedMB || 0);
+
+                setRateMetrics((prev) => ({
+                  totalDlMB: dl,
+                  totalUlKB: ul,
+                  sessionDownloadedMB: sessDl || prev.sessionDownloadedMB,
+                  sessionUploadedMB: sessUl || prev.sessionUploadedMB,
+                  peakDlMB: Math.max(prev.peakDlMB, dl),
+                  peakUlKB: Math.max(prev.peakUlKB, ul),
+                }));
 
                 setFullHistory((prev) => {
                   const now = Date.now();
-                  const newDl = [...prev.dl, data.rates.downloadMBs];
-                  const newUl = [...prev.ul, data.rates.uploadKBs / 1024];
+                  const newDl = [...prev.dl, dl];
+                  const newUl = [...prev.ul, ul / 1024];
                   const newTs = [...(prev.ts || []), now];
                   if (newDl.length > 3600) {
                     return {
@@ -176,16 +185,23 @@ export function useTelemetry(isLive: boolean = true) {
                   return { dl: newDl, ul: newUl, ts: newTs };
                 });
               }
+
               if (data.pings) {
-                if (data.pings.router) setPingRouter(data.pings.router);
-                if (data.pings.cloudflare) setPingCloudflare(data.pings.cloudflare);
-                if (data.pings.google) setPingGoogle(data.pings.google);
+                setPings({
+                  router: Number(data.pings.router || 0),
+                  cloudflare: Number(data.pings.cloudflare || 0),
+                  google: Number(data.pings.google || 0),
+                });
               }
+
               if (data.network) {
-                if (data.network.adapter) setActiveAdapter(data.network.adapter);
-                if (data.network.localIP) setLocalIP(data.network.localIP);
-                if (data.network.publicIP) setPublicIP(data.network.publicIP);
+                setNetwork((prev) => ({
+                  activeAdapter: data.network.adapter || prev.activeAdapter,
+                  localIP: data.network.localIP || prev.localIP,
+                  publicIP: data.network.publicIP || prev.publicIP,
+                }));
               }
+
               if (data.apps && data.apps.length > 0) setApps(data.apps);
               if (data.sockets && data.sockets.length > 0) setSockets(data.sockets);
               if (data.ports && data.ports.length > 0) setPorts(data.ports);
@@ -218,53 +234,7 @@ export function useTelemetry(isLive: boolean = true) {
     };
   }, []);
 
-  // Aggregated GeoIP Regions
-  const geoRegions = useMemo<GeoRegionItem[]>(() => {
-    const counts: Record<string, { count: number; code: string; orgs: Set<string> }> = {};
-    sockets.forEach((s) => {
-      if (
-        s.country &&
-        s.country !== "Unknown" &&
-        s.country !== "-" &&
-        s.country !== "LOCAL"
-      ) {
-        if (!counts[s.country]) {
-          counts[s.country] = {
-            count: 0,
-            code: s.code || (s.country === "LAN" ? "LAN" : s.country.slice(0, 2).toUpperCase()),
-            orgs: new Set(),
-          };
-        }
-        counts[s.country].count += 1;
-        if (s.code) {
-          counts[s.country].code = s.code;
-        }
-        if (s.org && s.org !== "Local / Unknown") {
-          counts[s.country].orgs.add(s.org);
-        }
-      }
-    });
-
-    return Object.entries(counts)
-      .map(([country, data]) => ({
-        country,
-        code: data.code,
-        count: data.count,
-        orgs: Array.from(data.orgs).slice(0, 3).join(", ") || "Direct Connection",
-        ping:
-          data.code === "TH"
-            ? "< 15ms"
-            : data.code === "SG"
-              ? "~35ms"
-              : data.code === "US"
-                ? "~180ms"
-                : "~120ms",
-        traffic: `${(data.count * 1.2).toFixed(1)} MB`,
-      }))
-      .sort((a, b) => b.count - a.count);
-  }, [sockets]);
-
-  // Speedtest Action Handlers
+  // Speedtest Handlers
   const handleStartSpeedtest = (
     provider: string,
     mode: "multi" | "single" = "multi",
@@ -302,38 +272,27 @@ export function useTelemetry(isLive: boolean = true) {
   const liveDlMbps =
     isSpeedtesting && speedtestProgress.stage === "download"
       ? speedtestProgress.mbps || 0
-      : totalDlMB * 8;
+      : rateMetrics.totalDlMB * 8;
 
   const liveUlMbps =
     isSpeedtesting && speedtestProgress.stage === "upload"
       ? speedtestProgress.mbps || 0
-      : (totalUlKB * 8) / 1024;
+      : (rateMetrics.totalUlKB * 8) / 1024;
+
+  const rates: TelemetryRates = {
+    ...rateMetrics,
+    liveDlMbps,
+    liveUlMbps,
+  };
 
   return {
     isAgentConnected,
     apps,
     sockets,
     ports,
-    rates: {
-      totalDlMB,
-      totalUlKB,
-      sessionDownloadedMB,
-      sessionUploadedMB,
-      peakDlMB,
-      peakUlKB,
-      liveDlMbps,
-      liveUlMbps,
-    },
-    pings: {
-      router: pingRouter,
-      cloudflare: pingCloudflare,
-      google: pingGoogle,
-    },
-    network: {
-      activeAdapter,
-      localIP,
-      publicIP,
-    },
+    rates,
+    pings,
+    network,
     fullHistory,
     speedtest: {
       progress: speedtestProgress,
@@ -343,6 +302,5 @@ export function useTelemetry(isLive: boolean = true) {
       cancel: handleCancelSpeedtest,
       clearHistory: handleClearSpeedtestHistory,
     },
-    geoRegions,
   };
 }

@@ -93,12 +93,14 @@ class NetworkCollector:
         if pid == 0:
             return "System Kernel / Closed"
         with self._lock:
-            if pid in self.proc_cache:
-                return self.proc_cache[pid]
+            cached = self.proc_cache.get(pid)
+            if cached:
+                return cached
         try:
-            p = psutil.Process(pid)
-            name = p.name()
+            name = psutil.Process(pid).name()
             with self._lock:
+                if len(self.proc_cache) > 2048:
+                    self.proc_cache.clear()
                 self.proc_cache[pid] = name
             return name
         except (psutil.NoSuchProcess, psutil.AccessDenied):
