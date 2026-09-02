@@ -197,11 +197,6 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({
               </span>
               <span className="text-[10px] text-ink-faint">Mbps</span>
             </div>
-            {(measuredDl > 0 || progress.stage === "upload") && progress.stage !== "download" && (
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-primary/10 text-primary font-semibold animate-in fade-in duration-300">
-                SETTLED
-              </span>
-            )}
           </div>
           <div className="text-2xl sm:text-3xl font-extrabold font-mono text-ink tracking-tight transition-all duration-300">
             {progress.stage === "download"
